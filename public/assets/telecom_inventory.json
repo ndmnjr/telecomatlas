@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "status": "DEMONSTRATION / NOT LIVE DATA",
+  "units": "m",
+  "coordinate_system": "Blender right-handed Z-up; position is world AABB center",
+  "assets": [
+    {
+      "id": "DEMO-TOWER-01",
+      "name": "Lattice tower",
+      "type": "tower",
+      "function": "Supports the demonstration antenna assemblies.",
+      "maintenance": "Illustrative visual review only: record visible coating changes from a supplied image; no structural assessment.",
+      "photos": [],
+      "dimensions": [
+        2.29,
+        2.29,
+        6.4125
+      ],
+      "position": [
+        2.4,
+        0.0,
+        3.20625
+      ]
+    },
+    {
+      "id": "DEMO-SECTOR-A",
+      "name": "Sector A / 000 degrees",
+      "type": "antenna_sector",
+      "function": "Represents one directional radio coverage sector.",
+      "maintenance": "Illustrative visual review only: compare panel and support appearance with an example reference; no RF measurements.",
+      "photos": [],
+      "dimensions": [
+        0.42,
+        0.86,
+        1.7
+      ],
+      "position": [
+        2.4,
+        -0.83,
+        5.65
+      ]
+    },
+    {
+      "id": "DEMO-SECTOR-B",
+      "name": "Sector B / 120 degrees",
+      "type": "antenna_sector",
+      "function": "Represents a second directional radio coverage sector.",
+      "maintenance": "Illustrative visual review only: record visible panel or bracket changes; alignment is schematic.",
+      "photos": [],
+      "dimensions": [
+        0.86853,
+        0.64434,
+        1.7
+      ],
+      "position": [
+        3.16193,
+        0.48969,
+        5.65
+      ]
+    },
+    {
+      "id": "DEMO-SECTOR-C",
+      "name": "Sector C / 240 degrees",
+      "type": "antenna_sector",
+      "function": "Represents a third directional radio coverage sector.",
+      "maintenance": "Illustrative visual review only: record visible panel or bracket changes; alignment is schematic.",
+      "photos": [],
+      "dimensions": [
+        0.86853,
+        0.64434,
+        1.7
+      ],
+      "position": [
+        1.63807,
+        0.48969,
+        5.65
+      ]
+    },
+    {
+      "id": "DEMO-SHELTER-01",
+      "name": "Equipment shelter",
+      "type": "shelter",
+      "function": "Represents an enclosure for indoor telecom equipment.",
+      "maintenance": "Illustrative visual review only: note visible door and exterior condition; no entry or electrical work is simulated.",
+      "photos": [],
+      "dimensions": [
+        4.1,
+        3.425,
+        2.43
+      ],
+      "position": [
+        -4.2,
+        -0.2625,
+        1.275
+      ]
+    },
+    {
+      "id": "DEMO-CABINET-01",
+      "name": "Radio cabinet",
+      "type": "cabinet",
+      "function": "Represents an outdoor radio equipment enclosure.",
+      "maintenance": "Illustrative visual review only: review cabinet door, vent and surrounding access in the example scene.",
+      "photos": [],
+      "dimensions": [
+        1.4,
+        0.95,
+        1.72
+      ],
+      "position": [
+        -0.4,
+        -0.8,
+        0.86
+      ]
+    },
+    {
+      "id": "DEMO-POWER-01",
+      "name": "Backup power enclosure",
+      "type": "power",
+      "function": "Represents a packaged backup power unit; internals are omitted.",
+      "maintenance": "Illustrative visual review only: record exterior appearance only; no operation or electrical assessment.",
+      "photos": [],
+      "dimensions": [
+        2.0,
+        1.25,
+        1.295
+      ],
+      "position": [
+        -2.7,
+        2.25,
+        0.6475
+      ]
+    },
+    {
+      "id": "DEMO-FENCE-01",
+      "name": "Perimeter and access gate",
+      "type": "fence",
+      "function": "Shows the site boundary and an illustrative entry route.",
+      "maintenance": "Illustrative visual review only: note visible gate and route obstructions; no security or safety approval.",
+      "photos": [],
+      "dimensions": [
+        12.035,
+        8.6375,
+        1.55
+      ],
+      "position": [
+        -1.0,
+        -0.60125,
+        0.775
+      ]
+    },
+    {
+      "id": "DEMO-DISH-01",
+      "name": "Backhaul dish",
+      "type": "dish",
+      "function": "Represents a point-to-point telecom link.",
+      "maintenance": "Illustrative visual review only: compare dish and mount appearance; no alignment or link testing.",
+      "photos": [],
+      "dimensions": [
+        0.31606,
+        0.84,
+        0.84
+      ],
+      "position": [
+        3.025,
+        -0.62,
+        4.35
+      ]
+    },
+    {
+      "id": "DEMO-CAMERA-01",
+      "name": "Site camera",
+      "type": "camera",
+      "function": "Represents a fixed site observation camera; no feed exists.",
+      "maintenance": "Illustrative visual review only: note visible housing condition; no live images or recording.",
+      "photos": [],
+      "dimensions": [
+        0.52129,
+        0.36489,
+        0.25
+      ],
+      "position": [
+        -2.51065,
+        -1.36,
+        2.15
+      ]
+    },
+    {
+      "id": "DEMO-TRAY-01",
+      "name": "Cable route",
+      "type": "cable_tray",
+      "function": "Indicates a schematic route between cabinet and tower.",
+      "maintenance": "Illustrative visual review only: record visible route continuity; cable capacity and separation are not designed.",
+      "photos": [],
+      "dimensions": [
+        2.25,
+        0.18,
+        0.12
+      ],
+      "position": [
+        1.25,
+        -0.8,
+        0.3
+      ]
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f6f2" />
+    <meta
+      name="description"
+      content="Explore every component of a procedural demonstration telecom site in 3D."
+    />
+    <title>Telecom Atlas · Site 01</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./vendor/build/three.module.js",
+          "three/addons/": "./vendor/addons/"
+        }
+      }
+    </script>
+    <script type="module" src="src/main.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#index">Skip to component index</a>
+    <header class="masthead">
+      <div>
+        <div class="eyebrow">
+          <span class="brand-mark">⌁</span> FIELD NOTES / DIGITAL ENGINEERING
+        </div>
+        <h1>Telecom Atlas<span class="edition">01</span></h1>
+        <p>A small site. Every part, in view.</p>
+      </div>
+      <div class="header-right">
+        <span class="demo">DEMONSTRATION / NOT LIVE DATA</span>
+        <nav aria-label="Workspace">
+          <button id="explore" aria-pressed="true">Explore</button
+          ><button id="inspect" aria-pressed="false">
+            Inspect <span aria-hidden="true">↗</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+    <main class="workspace">
+      <section class="viewer" aria-label="Interactive site explorer">
+        <div class="stage-heading">
+          <span
+            ><i class="status-dot"></i> SITE 01 <span class="muted">/ PROCEDURAL STUDY</span></span
+          ><span id="visible-count">Preparing geometry</span>
+        </div>
+        <div
+          id="stage"
+          tabindex="0"
+          role="region"
+          aria-label="3D model. Drag to orbit, scroll or pinch to zoom. Arrow keys orbit, plus and minus zoom, R resets camera."
+        >
+          <div class="stage-watermark" aria-hidden="true">TELECOM<br />FIELD STUDY</div>
+          <svg id="leaders" aria-hidden="true"></svg>
+          <div id="callouts" aria-label="Numbered component callouts"></div>
+          <div id="loading" role="status">
+            <span class="loader"></span><strong>Preparing the site</strong
+            ><span>Loading local geometry and checking every component…</span>
+          </div>
+          <div class="stage-corner">
+            <span id="view-name">ASSEMBLED SITE</span
+            ><small id="view-subtitle">32 component meshes · 11 equipment assets</small>
+          </div>
+          <div class="stage-tools">
+            <button id="labels" aria-pressed="true">Labels <span id="labels-state">on</span></button
+            ><button id="reset" title="Reset camera (R)">↺ <span>Reset camera</span></button>
+          </div>
+        </div>
+        <div class="transport">
+          <div class="segmented" aria-label="Assembly view">
+            <button id="assembled" aria-pressed="true">Assembled</button
+            ><button id="exploded" aria-pressed="false">Exploded</button>
+          </div>
+          <div class="range-block">
+            <div>
+              <label for="explode">Component separation</label
+              ><output id="amount" for="explode">0%</output>
+            </div>
+            <input id="explode" type="range" min="0" max="100" value="0" step="1" />
+          </div>
+        </div>
+        <div class="viewer-foot">
+          <span>Drag to orbit <b>·</b> Scroll to zoom <b>·</b> Select a number or part</span
+          ><span>Conceptual view, not disassembly instructions.</span>
+        </div>
+      </section>
+      <aside class="sidebar" id="index" aria-label="Component index">
+        <section class="index-head">
+          <div class="eyebrow">THE COMPLETE SITE</div>
+          <h2>Component index <span>32</span></h2>
+          <label class="search-label" for="search">Find a part, mesh name or equipment ID</label>
+          <div class="search-box">
+            <span aria-hidden="true">⌕</span
+            ><input
+              id="search"
+              type="search"
+              placeholder="Search all components"
+              autocomplete="off"
+            /><kbd>/</kbd>
+          </div>
+          <div class="index-meta">
+            <span id="result-count" aria-live="polite">32 components</span
+            ><button id="show-all">Show all</button>
+          </div>
+        </section>
+        <div id="legend" aria-label="All component meshes"></div>
+        <p id="no-results" hidden>No components match. Try “tower” or an equipment ID.</p>
+        <section class="inspector" aria-label="Component inspector" aria-live="polite">
+          <div class="eyebrow" id="detail-kicker">INSPECT A COMPONENT</div>
+          <h2 id="detail-title">The whole is in the details.</h2>
+          <p id="detail-description">
+            Choose any numbered part to bring it closer and see its role in this demonstration site.
+          </p>
+          <dl id="detail-meta" hidden>
+            <dt>Original mesh</dt>
+            <dd id="mesh-name"></dd>
+            <dt>Original asset ID</dt>
+            <dd id="asset-id"></dd>
+          </dl>
+          <p id="function-note" hidden>Illustrative function from the demonstration inventory.</p>
+          <button id="isolate" disabled>Isolate selected <span aria-hidden="true">↗</span></button>
+        </section>
+      </aside>
+    </main>
+    <footer class="page-foot">
+      <span>CODEX 3D GAME LAB <span class="muted">/ LOCAL MODEL STUDY</span></span
+      ><a href="licenses/NOTICE.txt" target="_blank">Source & licenses ↗</a
+      ><span>32 meshes accounted for. No live telemetry.</span>
+    </footer>
+  </body>
+</html>
