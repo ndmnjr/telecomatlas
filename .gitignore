@@ -1,3 +1,4 @@
+.vercel/
 node_modules/
 dist/
 verification/
@@ -7,3 +8,6 @@ verification/
 .env.*
 .DS_Store
 Thumbs.db
+
+.vercel
+.env*
