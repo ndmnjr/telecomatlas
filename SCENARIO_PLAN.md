@@ -55,7 +55,7 @@ Version 1 should say **IMS voice over 4G/5G — conceptual**. A later selector c
 
 ## Scenario 2 — What does the Core team do?
 
-Extend the camera from the site into an original conceptual data-centre vignette. Do not model or imply a real operator data centre.
+Extend the story from the site into an original conceptual data-centre **diagram overlay**. Do not add off-site logical functions to the 32-mesh inventory and do not model or imply a real operator data centre.
 
 Logical groups:
 
@@ -65,7 +65,7 @@ Logical groups:
 - **Policy and quality:** service policy/QoS coordination.
 - **Operations:** observability and resilience as a separate support layer, without displaying real KPIs.
 
-The storyboard should distinguish logical network functions from physical servers. Use a small procedural building/rack context plus clearly labeled logical overlays; do not imply one function equals one physical box.
+The storyboard should distinguish logical network functions from physical servers. Use clearly labeled SVG/HTML logical overlays anchored beside the real site; do not imply one function equals one physical box.
 
 ## Scenario 3 — What does the Transport team do?
 
@@ -125,8 +125,10 @@ Required validation:
 - `src/scenarios/controller.js` — deterministic play/pause/seek state machine.
 - `src/scenarios/paths.js` — path anchors, pulse timing and reduced-motion states.
 - `src/scenarios/panel.js` — semantic controls and narrative rendering.
-- `src/context/` — original procedural handset, logical core/data-centre and transport context geometry.
-- Extend `scene.js` through a narrow scenario adapter; do not mix narrative state into model-loading/validation logic.
+- `src/scenarios/overlay.js` — accessible SVG/HTML caller, phone, core and transport nodes. These are conceptual teaching nodes, never inventory meshes.
+- Extend `scene.js` only through a narrow adapter that exposes projected anchors and component highlighting; do not mix narrative state into model-loading/validation logic.
+
+Keep `telecom_site.glb`, the catalogue and the inventory unchanged. Add new selectable geometry only in a future dedicated atlas when an off-site object becomes a real governed asset with its own stable identity and bounds.
 
 ## Test-first delivery
 
