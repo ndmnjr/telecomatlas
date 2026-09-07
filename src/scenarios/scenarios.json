@@ -1,0 +1,317 @@
+[
+  {
+    "id": "incoming-call",
+    "title": "Incoming IMS call",
+    "question": "What happens when you receive a call?",
+    "scope": "synthetic-vendor-neutral",
+    "technology": "IMS voice over 4G/5G — conceptual",
+    "disclaimer": "A teaching sequence, not a literal packet trace; function placement and radio splits vary by architecture.",
+    "sources": [
+      {
+        "label": "3GPP VoLTE / VoNR overview",
+        "url": "https://www.3gpp.org/technologies/volte-vonr"
+      },
+      {
+        "label": "3GPP TS 23.228",
+        "url": "https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=821"
+      },
+      {
+        "label": "GSMA VoLTE",
+        "url": "https://www.gsma.com/solutions-and-impact/technologies/networks/ip_services/volte"
+      }
+    ],
+    "stages": [
+      {
+        "id": "incoming-request",
+        "order": 1,
+        "label": "Incoming request",
+        "narrative": "A remote caller or interconnect delivers a call request to the operator’s conceptual IMS service layer.",
+        "focus": ["remote-caller", "ims-service"],
+        "support": [],
+        "paths": ["caller-to-ims"],
+        "activePlane": "control",
+        "camera": "site-wide"
+      },
+      {
+        "id": "find-subscriber",
+        "order": 2,
+        "label": "Find the subscriber",
+        "narrative": "Service and core functions check subscriber and session information to determine how the receiving device can be reached.",
+        "focus": ["ims-service", "subscriber-session", "packet-core"],
+        "support": [],
+        "paths": ["ims-to-subscriber", "subscriber-to-core"],
+        "activePlane": "control",
+        "camera": "site-wide"
+      },
+      {
+        "id": "page-and-prepare",
+        "order": 3,
+        "label": "Page and prepare",
+        "narrative": "Packet core and radio access coordinate reachability and prepare radio resources with conceptual control signalling.",
+        "condition": "Paging occurs when the device is not already reachable through an active connection.",
+        "focus": ["packet-core", "receiving-phone"],
+        "support": [],
+        "paths": ["core-to-transport"],
+        "activePlane": "control",
+        "camera": "site-wide"
+      },
+      {
+        "id": "carry-to-site",
+        "order": 4,
+        "label": "Carry to the site",
+        "narrative": "Transport carries cyan call-setup signalling toward the serving radio site over fiber or an approved alternative backhaul.",
+        "focus": ["transport-cloud", "DEMO-CABINET-01"],
+        "support": ["DEMO-POWER-01", "DEMO-SHELTER-01"],
+        "paths": ["core-to-transport", "transport-to-ran"],
+        "activePlane": "control",
+        "camera": "site-wide"
+      },
+      {
+        "id": "process-at-ran",
+        "order": 5,
+        "label": "Process at the RAN",
+        "narrative": "The baseband or DU processes radio protocols and scheduling. DU and CU placement varies by architecture.",
+        "focus": ["DEMO-CABINET-01"],
+        "support": ["DEMO-POWER-01", "DEMO-SHELTER-01", "DEMO-TOWER-01"],
+        "paths": ["transport-to-ran"],
+        "activePlane": "control",
+        "camera": "cabinet"
+      },
+      {
+        "id": "convert-to-radio",
+        "order": 6,
+        "label": "Convert to radio",
+        "narrative": "The radio unit performs relevant low-layer and RF processing; exact functional splits differ between deployments.",
+        "focus": ["DEMO-CABINET-01", "radio-unit"],
+        "support": ["DEMO-POWER-01", "DEMO-TRAY-01", "DEMO-TOWER-01"],
+        "paths": ["ran-to-radio"],
+        "activePlane": "control",
+        "camera": "cabinet"
+      },
+      {
+        "id": "radio-link",
+        "order": 7,
+        "label": "Transmit from the sector",
+        "narrative": "The selected sector antenna provides the radio link to the receiving phone.",
+        "focus": ["DEMO-SECTOR-A", "receiving-phone"],
+        "support": ["DEMO-POWER-01", "DEMO-TOWER-01"],
+        "paths": ["radio-to-sector", "sector-to-phone"],
+        "activePlane": "control",
+        "camera": "sector-a"
+      },
+      {
+        "id": "connected-conversation",
+        "order": 8,
+        "label": "Connect the conversation",
+        "narrative": "After answer and resource setup, established green voice media traverses the user plane, transport network, site equipment, radio unit and serving sector to the receiving phone.",
+        "focus": [
+          "remote-caller",
+          "user-plane",
+          "transport-cloud",
+          "DEMO-CABINET-01",
+          "radio-unit",
+          "DEMO-SECTOR-A",
+          "receiving-phone"
+        ],
+        "support": ["DEMO-POWER-01", "DEMO-SHELTER-01", "DEMO-TOWER-01"],
+        "paths": [
+          "media-caller-to-user-plane",
+          "media-user-plane-to-transport",
+          "media-transport-to-site",
+          "media-site-to-radio",
+          "media-radio-to-sector",
+          "media-sector-to-phone"
+        ],
+        "activePlane": "media",
+        "camera": "sector-a"
+      }
+    ]
+  },
+  {
+    "id": "core-team",
+    "title": "Core team",
+    "question": "What does the Core team do?",
+    "scope": "synthetic-vendor-neutral",
+    "technology": "Logical service functions — conceptual",
+    "disclaimer": "Logical network functions are not individual physical servers, and this diagram does not depict a real operator data centre.",
+    "sources": [
+      {
+        "label": "3GPP VoLTE / VoNR overview",
+        "url": "https://www.3gpp.org/technologies/volte-vonr"
+      },
+      {
+        "label": "3GPP TS 23.228",
+        "url": "https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=821"
+      },
+      {
+        "label": "GSMA VoLTE",
+        "url": "https://www.gsma.com/solutions-and-impact/technologies/networks/ip_services/volte"
+      }
+    ],
+    "stages": [
+      {
+        "id": "interconnect-edge",
+        "order": 1,
+        "label": "Accept the service request",
+        "narrative": "A conceptual interconnect edge exchanges the incoming request with IMS service control.",
+        "focus": ["interconnect", "ims-service"],
+        "support": [],
+        "paths": ["interconnect-to-ims"],
+        "activePlane": "control",
+        "camera": "core-diagram"
+      },
+      {
+        "id": "ims-control",
+        "order": 2,
+        "label": "Control the IMS session",
+        "narrative": "Proxy, interrogating and serving session-control roles coordinate SIP signalling and telephony services as logical functions.",
+        "focus": ["ims-service"],
+        "support": [],
+        "paths": ["caller-to-ims"],
+        "activePlane": "control",
+        "camera": "core-diagram"
+      },
+      {
+        "id": "subscriber-mobility",
+        "order": 3,
+        "label": "Resolve identity and reachability",
+        "narrative": "Subscriber, registration and mobility or session functions help locate the service endpoint without exposing real records.",
+        "focus": ["subscriber-session", "packet-core"],
+        "support": [],
+        "paths": ["ims-to-subscriber", "subscriber-to-core"],
+        "activePlane": "control",
+        "camera": "core-diagram"
+      },
+      {
+        "id": "policy-quality",
+        "order": 4,
+        "label": "Coordinate policy and quality",
+        "narrative": "Service policy and quality coordination prepare appropriate treatment; no real configuration or KPI is shown.",
+        "focus": ["policy-quality", "user-plane"],
+        "support": [],
+        "paths": ["ims-to-policy", "policy-to-user-plane"],
+        "activePlane": "control",
+        "camera": "core-diagram"
+      },
+      {
+        "id": "route-media",
+        "order": 5,
+        "label": "Route established media",
+        "narrative": "User-plane functions carry the established green media path toward the access network and serving site.",
+        "focus": ["user-plane", "DEMO-CABINET-01"],
+        "support": [],
+        "paths": ["user-plane-to-site"],
+        "activePlane": "media",
+        "camera": "core-diagram"
+      },
+      {
+        "id": "observe-resilience",
+        "order": 6,
+        "label": "Support operations and resilience",
+        "narrative": "Observability and resilience support service availability, but are not drawn as user traffic and contain no real KPIs.",
+        "focus": ["operations"],
+        "support": ["operations", "DEMO-POWER-01", "DEMO-SHELTER-01"],
+        "paths": ["operations-support"],
+        "activePlane": "support",
+        "camera": "core-diagram"
+      }
+    ]
+  },
+  {
+    "id": "transport-fiber",
+    "title": "Transport & fiber",
+    "question": "What does the Transport team do?",
+    "scope": "synthetic-vendor-neutral",
+    "technology": "Packet and optical transport — conceptual",
+    "disclaimer": "Actual routing, protection, function placement and topology vary by operator; no real route or fault domain is represented.",
+    "sources": [
+      {
+        "label": "ITU-T GSTR-TN5G",
+        "url": "https://www.itu.int/pub/T-TUT-HOME-2018"
+      },
+      {
+        "label": "O-RAN WG4",
+        "url": "https://o-ran.org/technical-groups/wg4"
+      }
+    ],
+    "stages": [
+      {
+        "id": "site-handoff",
+        "order": 1,
+        "label": "Hand off site traffic",
+        "narrative": "Site equipment hands green media and service traffic to the site router or switch.",
+        "focus": ["DEMO-CABINET-01", "site-router"],
+        "support": ["DEMO-POWER-01"],
+        "paths": ["site-to-router"],
+        "activePlane": "media",
+        "camera": "transport-diagram"
+      },
+      {
+        "id": "patch-to-fiber",
+        "order": 2,
+        "label": "Patch toward access fiber",
+        "narrative": "The site router or switch hands green media and service traffic through the ODF or patching boundary.",
+        "focus": ["site-router", "odf"],
+        "support": [],
+        "paths": ["router-to-odf"],
+        "activePlane": "media",
+        "camera": "transport-diagram"
+      },
+      {
+        "id": "access-fiber",
+        "order": 3,
+        "label": "Cross the access network",
+        "narrative": "From the ODF or patching boundary, access fiber carries green media and service traffic away from the site; this is not a direct site-to-core cable.",
+        "focus": ["odf", "access-fiber"],
+        "support": [],
+        "paths": ["odf-to-access"],
+        "activePlane": "media",
+        "camera": "transport-diagram"
+      },
+      {
+        "id": "aggregate-sites",
+        "order": 4,
+        "label": "Aggregate many sites",
+        "narrative": "Aggregation combines green media and service traffic from multiple access connections before broader metro and core transport.",
+        "focus": ["access-fiber", "aggregation"],
+        "support": [],
+        "paths": ["access-to-aggregation"],
+        "activePlane": "media",
+        "camera": "transport-diagram"
+      },
+      {
+        "id": "metro-core",
+        "order": 5,
+        "label": "Carry across metro and core",
+        "narrative": "Metro and core transport carry green media and service traffic toward a conceptual data centre and core functions.",
+        "focus": ["aggregation", "metro-core", "data-center"],
+        "support": [],
+        "paths": ["aggregation-to-metro", "metro-to-datacenter"],
+        "activePlane": "media",
+        "camera": "transport-diagram"
+      },
+      {
+        "id": "protect-and-synchronize",
+        "order": 6,
+        "label": "Protect and synchronize",
+        "narrative": "A dashed green conceptual protection route carries alternate media and service traffic, while amber synchronization is a service requirement—not user traffic.",
+        "focus": ["protection-node", "sync-source"],
+        "support": ["sync-source"],
+        "paths": ["protection-route", "sync-service"],
+        "activePlane": "mixed",
+        "camera": "transport-diagram"
+      },
+      {
+        "id": "optional-microwave",
+        "order": 7,
+        "label": "Consider optional microwave",
+        "narrative": "Microwave can carry green media and service traffic as alternative or complementary backhaul. Its use and protection design depend on the deployment.",
+        "focus": ["DEMO-DISH-01", "microwave-network"],
+        "support": ["DEMO-POWER-01", "DEMO-TOWER-01"],
+        "paths": ["microwave-branch"],
+        "activePlane": "media",
+        "camera": "transport-diagram"
+      }
+    ]
+  }
+]

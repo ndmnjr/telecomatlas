@@ -93,6 +93,7 @@ export async function createScene(host, state, onSelect) {
     p.color = material.color.clone();
   }
   let amount = state.amount,
+    journeyStage = null,
     height = 20,
     targetHeight = 20,
     transition = true,
@@ -224,15 +225,35 @@ export async function createScene(host, state, onSelect) {
   ])
     renderer.domElement.addEventListener(name, fn);
   function updateSelection() {
+    const journeyFocus = new Set(journeyStage?.focus ?? []),
+      journeySupport = new Set(journeyStage?.support ?? []),
+      journeyColor =
+        journeyStage?.activePlane === 'media'
+          ? new T.Color('#25a765')
+          : journeyStage?.activePlane === 'support'
+            ? new T.Color('#c68a20')
+            : new T.Color('#00a7bd'),
+      supportColor = new T.Color('#c68a20');
     for (const p of parts) {
-      const selected = p.number === state.selected;
+      const selected = p.number === state.selected,
+        focused = journeyFocus.has(p.assetId) || journeyFocus.has(p.sourceName),
+        supporting = journeySupport.has(p.assetId) || journeySupport.has(p.sourceName);
       p.mesh.visible = !state.isolate || selected;
-      p.mesh.material.color.copy(selected ? new T.Color('#117a68') : p.color);
-      p.mesh.material.transparent = !!state.selected && !selected;
-      p.mesh.material.opacity = state.selected && !selected ? 0.14 : 1;
-      p.mesh.material.depthWrite = !state.selected || selected;
+      p.mesh.material.color.copy(
+        selected
+          ? new T.Color('#117a68')
+          : focused
+            ? journeyColor
+            : supporting
+              ? supportColor
+              : p.color,
+      );
+      const dim = state.selected ? !selected : !!journeyStage && !focused && !supporting;
+      p.mesh.material.transparent = dim;
+      p.mesh.material.opacity = dim ? (state.selected ? 0.14 : 0.38) : 1;
+      p.mesh.material.depthWrite = !dim;
       p.mesh.material.needsUpdate = true;
-      p.mesh.castShadow = !state.selected && p.number !== 1;
+      p.mesh.castShadow = !state.selected && !journeyStage && p.number !== 1;
     }
     dirty = true;
   }
@@ -383,6 +404,33 @@ export async function createScene(host, state, onSelect) {
       dirty = true;
     },
     audit,
+    journey(stage) {
+      journeyStage = stage;
+      updateSelection();
+    },
+    clearJourney() {
+      journeyStage = null;
+      updateSelection();
+    },
+    projectAnchors(ids) {
+      const result = {};
+      for (const id of ids) {
+        const matched = parts.filter((p) => p.assetId === id || p.sourceName === id);
+        if (!matched.length) continue;
+        const point = matched
+          .reduce(
+            (sum, p) => sum.add(p.center.clone().addScaledVector(p.offset, amount)),
+            new T.Vector3(),
+          )
+          .divideScalar(matched.length)
+          .project(camera);
+        result[id] = {
+          x: T.MathUtils.clamp(((point.x + 1) * 100) / 2, 13, 87),
+          y: T.MathUtils.clamp(((1 - point.y) * 100) / 2, 10, 90),
+        };
+      }
+      return result;
+    },
     // Read-only diagnostics: find a real visible triangle hit for CDP pixel picking.
     pickPoint(number) {
       const p = parts.find((p) => p.number === number),

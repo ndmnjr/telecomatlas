@@ -71,7 +71,7 @@ The storyboard should distinguish logical network functions from physical server
 
 Animate a vendor-neutral path:
 
-`site equipment → ODF/patching → site router/switch → access fiber → aggregation → metro/core transport → data centre`
+`site equipment → site router/switch → ODF/patching → access fiber → aggregation → metro/core transport → data centre`
 
 Add a dashed protection route and an optional microwave branch. Explain that actual routing, protection and topology vary by operator. ITU-T's 5G transport overview distinguishes fronthaul (RRU/O-RU to DU), midhaul (DU to CU) and backhaul (CU/RAN toward the core), and treats synchronization and transport isolation as explicit requirements.[5]
 
