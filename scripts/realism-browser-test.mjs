@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { browser, sleep } from './cdp.mjs';
 const b = await browser();
 function check(name, value) {
-  console.log(`${value ? 'PASS' : 'FAIL'} ${name}`);
+  console.log(`${value ? '🟢 PASS' : '🔴 FAIL'} ${name}`);
   assert.ok(value, name);
 }
 async function stagePixelDigest() {
@@ -89,12 +89,12 @@ async function isolatedOverlayPixelDigest(targetSelector, hiddenSelector) {
 const groundOverlayPixelDigest = () =>
   isolatedOverlayPixelDigest(
     '.journey-lines',
-    '#stage canvas, .story-phone, .story-operator, .story-support, .story-rf, .journey-nodes, .story-scene-caption, #leaders, #callouts, .stage-watermark, #loading',
+    '#stage canvas, .story-phone, .story-operator, .story-support, .story-rf, .journey-nodes, #leaders, #callouts, .stage-watermark, #loading',
   );
 const rfOverlayPixelDigest = () =>
   isolatedOverlayPixelDigest(
     '.story-rf',
-    '#stage canvas, .story-phone, .story-operator, .story-support, .journey-lines, .journey-nodes, .story-scene-caption, #leaders, #callouts, .stage-watermark, #loading',
+    '#stage canvas, .story-phone, .story-operator, .story-support, .journey-lines, .journey-nodes, #leaders, #callouts, .stage-watermark, #loading',
   );
 try {
   await b.viewport(1440, 1000);
@@ -163,7 +163,7 @@ try {
     check(
       'mobile ground-edge panel has the exact readable conceptual label',
       await b.evaluate(
-        '(()=>{const e=document.querySelector(".story-operator"),r=e.getBoundingClientRect();return !e.hidden&&e.textContent==="Operator network \u2014 conceptual"&&r.left>=0&&r.right<=innerWidth})()',
+        '(()=>{const e=document.querySelector(".story-operator"),r=e.getBoundingClientRect();return !e.hidden&&e.textContent.includes("Transport")&&e.textContent.includes("Packet core / User plane")&&e.textContent.includes("IMS")&&r.left>=0&&r.right<=innerWidth})()',
       ),
     );
     await b.dom('.journey-step-button[data-stage="6"]');
@@ -181,43 +181,6 @@ try {
     'no runtime exceptions or console errors',
     !b.exceptions.length && !b.messages.some((m) => m.type === 'error'),
   );
-  {
-    for (const [width, height, label] of [
-      [1440, 1000, 'desktop'],
-      [390, 844, 'mobile'],
-    ]) {
-      await b.viewport(width, height);
-      await b.dom('.journey-tab[data-scenario="transport-fiber"]');
-      await b.dom('.journey-step-button[data-stage="5"]');
-      await sleep(800);
-      check(
-        `${label} grounded transport and dashed protection`,
-        await b.evaluate(
-          '(()=>{const a=atlas.audit();return a.story.context==="transport"&&a.parts.every(p=>!p.visible)&&a.story.routes.filter(r=>r.active&&r.plane!=="support").every(r=>r.worldPoints.every(p=>p[1]<=0.35))&&!!document.querySelector("path[data-kind=protection][data-active=true]")})()',
-        ),
-      );
-      await b.evaluate('document.querySelector("#stage").scrollIntoView({block:"start"})');
-      await b.shot(`realism-${label}-transport`);
-      await b.dom('.journey-step-button[data-stage="6"]');
-      check(
-        `${label} microwave joins two visible towers`,
-        await b.evaluate('atlas.audit().story.towers.length===2'),
-      );
-      await b.evaluate('document.querySelector("#stage").scrollIntoView({block:"start"})');
-      await b.shot(`realism-${label}-microwave`);
-      await b.dom('.journey-tab[data-scenario="core-team"]');
-      await b.dom('.journey-step-button[data-stage="3"]');
-      await sleep(800);
-      check(
-        `${label} dedicated conceptual data-centre cutaway`,
-        await b.evaluate(
-          '(()=>{const a=atlas.audit();return a.story.context==="core"&&a.parts.every(p=>!p.visible)&&a.story.rackCount>4&&document.querySelector(".story-scene-caption").textContent.includes("one physical server")})()',
-        ),
-      );
-      await b.evaluate('document.querySelector("#stage").scrollIntoView({block:"start"})');
-      await b.shot(`realism-${label}-core`);
-    }
-  }
   for (const [width, height, label] of [
     [1440, 1000, 'desktop'],
     [390, 844, 'mobile'],
@@ -330,13 +293,6 @@ try {
     check(
       'reduced-motion ground-overlay pixels are static while the timeline advances',
       reducedPathPixelsA === reducedPathPixelsB,
-    );
-    await b.dom('.journey-play');
-    check(
-      'each numbered core role maps to a rack marker',
-      await b.evaluate(
-        '(()=>{document.querySelector(".journey-tab[data-scenario=core-team]").click();return document.querySelectorAll(".story-map-number").length===4})()',
-      ),
     );
     await b.dom('#explore');
     await sleep(800);

@@ -1,6 +1,6 @@
-import { createStoryScenes } from './story/scenes.js';
-import { siteRoutes } from './story/ground-path.js';
+import { createSiteNetworkStrip, siteRoutes } from './story/ground-path.js';
 import { rfWavefronts } from './story/rf.js';
+import { DIRECTION } from './scenarios/paths.js';
 import { createStoryActors } from './story/actors.js';
 import * as T from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -97,9 +97,8 @@ export async function createScene(host, state, onSelect) {
     p.color = material.color.clone();
   }
   const actors = createStoryActors(parts);
-  const contexts = createStoryScenes();
-  actors.group.add(contexts.group);
-  contexts.update(null);
+  const networkStrip = createSiteNetworkStrip();
+  actors.group.add(networkStrip.group);
   actors.group.visible = false;
   scene.add(actors.group);
   let story = null;
@@ -174,11 +173,7 @@ export async function createScene(host, state, onSelect) {
       c.set(close ? 2.7 : -0.3, close ? 2.6 : 2.2, 1.6);
       targetHeight = Math.max(close ? 8.5 : 10.5, (close ? 6.4 : 12) / aspect);
     }
-    if (story && story.context !== 'site' && !state.selected) {
-      c.set(0, 1.4, 0.7);
-      targetHeight = Math.max(9.5, 16 / aspect);
-      direction.set(0.12, 0.6, 1.4).normalize();
-    }
+
     targetLook.copy(c);
     targetPosition.copy(c).addScaledVector(direction, 80);
     camera.zoom = 1;
@@ -390,10 +385,7 @@ export async function createScene(host, state, onSelect) {
   }
   function storyVisual() {
     if (!story) return {};
-    const model =
-      story.context === 'site'
-        ? siteRoutes(parts, actors.phone.getWorldPosition(new T.Vector3()))
-        : contexts.model(story.context);
+    const model = siteRoutes(parts, actors.phone.getWorldPosition(new T.Vector3()));
     const anchors = Object.fromEntries(
       Object.entries(model.anchors).map(([id, p]) => [id, projectWorld(p)]),
     );
@@ -403,25 +395,22 @@ export async function createScene(host, state, onSelect) {
     });
     const projectedSector = anchors['DEMO-SECTOR-A'] ? pixel(anchors['DEMO-SECTOR-A']) : null;
     const projectedPhone = anchors['receiving-phone'] ? pixel(anchors['receiving-phone']) : null;
+    const uplink = story.phase === 'browse-uplink';
     const rf = story.rf
       ? rfWavefronts(
-          projectedSector,
-          projectedPhone,
+          uplink ? projectedPhone : projectedSector,
+          uplink ? projectedSector : projectedPhone,
           story.progress,
           story.reduced,
-          story.phone === 'connected',
+          story.phone === 'connected'
+            ? DIRECTION.BIDIRECTIONAL
+            : uplink
+              ? DIRECTION.UPLINK
+              : DIRECTION.DOWNLINK,
         )
       : null;
     return {
       context: story.context,
-      towers: model.towers?.map((p) => p.toArray()) ?? [],
-      rackCount: model.rackCount ?? 0,
-      layers: model.layers ?? [],
-      annotations: (model.labels ?? []).map((id, index) => ({
-        id,
-        number: index + 1,
-        ...anchors[id],
-      })),
       anchors,
       projectedSector,
       projectedPhone,
@@ -490,7 +479,6 @@ export async function createScene(host, state, onSelect) {
       actors.update(story);
       actors.group.visible = !state.selected;
       actors.person.visible = story.context === 'site';
-      contexts.update(story.context);
       journeyStage = stage;
       if (changed) fit();
       updateSelection();
@@ -549,7 +537,7 @@ export async function createScene(host, state, onSelect) {
         p.mesh.geometry.dispose();
         p.mesh.material.dispose();
       }
-      contexts.dispose();
+      networkStrip.dispose();
       actors.dispose();
       renderer.dispose();
     },

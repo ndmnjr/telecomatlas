@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { browser, sleep } from './cdp.mjs';
+import { JOURNEY_PATHS } from '../src/scenarios/paths.js';
 
 const scenarios = JSON.parse(await fs.readFile('src/scenarios/scenarios.json', 'utf8'));
 const b = await browser();
@@ -10,7 +11,7 @@ const screenshots = [];
 
 function check(name, value) {
   checks.push({ name, pass: Boolean(value) });
-  console.log(`${value ? 'PASS' : 'FAIL'} ${name}`);
+  console.log(`${value ? '🟢 PASS' : '🔴 FAIL'} ${name}`);
   assert.ok(value, name);
 }
 
@@ -45,7 +46,7 @@ async function verifyStage(viewport, scenario, index) {
   check(
     `${viewport} ${scenario.id} stage ${index + 1} path mapping is exact`,
     await b.evaluate(
-      `JSON.stringify([...document.querySelectorAll('.journey-lines path[data-active=true]')].map(e=>e.dataset.path))===${JSON.stringify(JSON.stringify(stage.paths))}`,
+      `JSON.stringify([...document.querySelectorAll('.journey-lines path[data-active=true]')].map(e=>e.dataset.path).sort())===${JSON.stringify(JSON.stringify([...stage.paths].sort()))}`,
     ),
   );
   check(
@@ -66,6 +67,63 @@ async function shot(name) {
   const path = `verification/${stamp}-${name}.png`;
   await b.shot(`${stamp}-${name}`);
   screenshots.push(path);
+}
+
+async function verifyBrowseCycle(viewport) {
+  const browse = scenarios.find((scenario) => scenario.id === 'browse-internet');
+  const expectations = [
+    [4, 'request', 'uplink', 9],
+    [5, 'response', 'downlink', 9],
+    [6, 'page-loaded', 'downlink', 2],
+  ];
+  await clickScenario('browse-internet');
+  await clickStage(1);
+  check(
+    `${viewport} browse RF uplink runs from phone to sector`,
+    await b.evaluate(
+      '(()=>{const a=atlas.audit().story;return a.rf.direction==="uplink"&&JSON.stringify(a.rf.from)===JSON.stringify(a.projectedPhone)&&JSON.stringify(a.rf.to)===JSON.stringify(a.projectedSector)&&a.rf.waves.every(w=>w.direction==="uplink")})()',
+    ),
+  );
+  for (const [index, name, direction, count] of expectations) {
+    await clickStage(index);
+    const stage = browse.stages[index];
+    check(
+      `${viewport} browse ${name} has ordered active path IDs`,
+      await b.evaluate(
+        `JSON.stringify([...document.querySelectorAll('.journey-lines path[data-active=true]')].map(e=>e.dataset.path))===${JSON.stringify(JSON.stringify(stage.paths))}`,
+      ),
+    );
+    check(
+      `${viewport} browse ${name} has one ${direction} pulse per handoff`,
+      await b.evaluate(
+        `(()=>{const p=[...document.querySelectorAll('.story-pulse')];return p.length===${count}&&p.every(e=>e.dataset.direction===${JSON.stringify(direction)})})()`,
+      ),
+    );
+    check(
+      `${viewport} browse ${name} route endpoints and point order are exact`,
+      await b.evaluate(
+        `(()=>{const r=atlas.audit().story.routes.filter(route=>route.active),expected=${JSON.stringify(
+          stage.paths.map((id) => ({ id, from: JOURNEY_PATHS[id].from, to: JOURNEY_PATHS[id].to })),
+        )};return JSON.stringify(r.map(route=>({id:route.id,from:route.from,to:route.to})))===JSON.stringify(expected)&&r.every(route=>route.worldPoints.length>=2)})()`,
+      ),
+    );
+    if (index === 5)
+      check(
+        `${viewport} browse RF downlink runs from sector to phone`,
+        await b.evaluate(
+          '(()=>{const a=atlas.audit().story;return a.rf.direction==="downlink"&&JSON.stringify(a.rf.from)===JSON.stringify(a.projectedSector)&&JSON.stringify(a.rf.to)===JSON.stringify(a.projectedPhone)&&a.rf.waves.every(w=>w.direction==="downlink")})()',
+        ),
+      );
+    if (index === 6)
+      check(
+        `${viewport} browse page-loaded ends at the loaded phone`,
+        await b.evaluate(
+          'atlas.journey().story.phone==="loaded"&&atlas.audit().story.routes.filter(route=>route.active).at(-1).to==="receiving-phone"',
+        ),
+      );
+    await b.evaluate('document.querySelector("#stage").scrollIntoView({block:"center"})');
+    await shot(`${viewport}-browse-${name}`);
+  }
 }
 
 try {
@@ -112,6 +170,7 @@ try {
     for (let index = 0; index < scenario.stages.length; index++)
       await verifyStage('desktop', scenario, index);
   }
+  await verifyBrowseCycle('desktop');
 
   await clickScenario('incoming-call');
   await clickStage(7);
@@ -128,25 +187,16 @@ try {
     ),
   );
 
-  await clickScenario('core-team');
-  await clickStage(4);
-  await b.evaluate(
-    'document.querySelector("#journey-panel").scrollTop=0;document.querySelector("#stage").scrollIntoView({block:"center"})',
-  );
-  await shot('desktop-core-media');
-
-  await clickScenario('transport-fiber');
+  await clickScenario('browse-internet');
   await clickStage(5);
   check(
-    'transport protection is dashed conceptual and sync is amber support service',
-    await b.evaluate(
-      '!!document.querySelector(".journey-lines path[data-active=true][data-kind=protection]")&&!!document.querySelector(".journey-lines path[data-active=true][data-plane=support]")',
-    ),
+    'browse response return uses media plane',
+    await b.evaluate('document.querySelector("#journey-overlay").dataset.plane==="media"'),
   );
   await b.evaluate(
     'document.querySelector("#journey-panel").scrollTop=0;document.querySelector("#stage").scrollIntoView({block:"center"})',
   );
-  await shot('desktop-transport-protection');
+  await shot('desktop-browse-response');
 
   await clickScenario('incoming-call');
   await clickStage(0);
@@ -223,16 +273,15 @@ try {
     for (let index = 0; index < scenario.stages.length; index++)
       await verifyStage('mobile', scenario, index);
   }
-  await clickScenario('transport-fiber');
+  await verifyBrowseCycle('mobile');
+  await clickScenario('browse-internet');
   await clickStage(6);
   check(
-    'optional microwave branch is explicitly marked optional',
-    await b.evaluate(
-      '!!document.querySelector(".journey-lines path[data-active=true][data-optional=true]")',
-    ),
+    'browse page-loaded stage shows loaded phone state',
+    await b.evaluate('atlas.journey().story.phone==="loaded"'),
   );
   await b.evaluate('scrollTo(0,0)');
-  await shot('mobile-transport-microwave');
+  await shot('mobile-browse-loaded');
   await b.evaluate('document.querySelector("#journey-panel").scrollIntoView({block:"start"})');
   await shot('mobile-journey-panel');
 

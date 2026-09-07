@@ -2,8 +2,8 @@
 
 A standalone Three.js explorer for an original procedural telecom site. Browse,
 search, select and isolate its numbered components, move between assembled and
-exploded views, or use **Journeys** to follow three synthetic, vendor-neutral
-service stories across the site, core and transport network. Geometry and
+exploded views, or use **Journeys** to follow two synthetic, vendor-neutral
+end-to-end service stories across the radio site, transport and core handoffs. Geometry and
 inventory are included in `public/assets/`; Blender, Unity and the original
 development workspace are not required.
 
@@ -59,7 +59,7 @@ Viewport emulation is not a physical-device or GPU performance benchmark.
 Browser checks cover desktop/mobile layouts, every component selection, triangle
 picking, search, isolation, slider/keyboard controls, camera movement, reduced
 motion and deliberate asset-loading errors. The journey harness additionally
-visits every stage of all three scenarios at desktop and 390×844, verifies exact
+visits all 15 stages of both scenarios at desktop and 390×844, verifies exact
 path mappings, timeline seek, Play/Pause, Previous/Next, keyboard stepping,
 pause-to-inspect/resume, reduced-motion stepped paths, clipping and runtime
 errors. Fresh screenshots and logs are written locally under `verification/`,
@@ -75,7 +75,7 @@ manifest there.
 - `/` focuses search. Tab/Enter/Space activate controls. Arrow/Home/End keys work
   on the separation slider. Escape clears inspection or the focused search.
 - Explore returns to the full site; Inspect opens the selected part or tower mast.
-- Journeys opens **Incoming call**, **Inside the network**, and **Transport & fiber**.
+- Journeys opens **Incoming call** and **Browse the Internet**.
   Use Play/Pause, Previous/Next, the stage timeline, or the persistent step list.
   With focus on the journey panel, Left/Right step, Space plays or pauses, and
   Home/End seek to the first/last stage. Selecting a highlighted site asset pauses
@@ -92,14 +92,14 @@ readable phone inset offers **Answer call**. You can also use Next or the timeli
 Connected voice follows every handoff in both directions. Filled pulses travel
 toward the phone; open pulses return. Solid and dashed radio fronts distinguish
 the two directions. Power, shelter and tower structure remain amber support.
-Transport has a separate ground cross-section with buried ducts, a second dashed
-protection route, timing support and an optional link between two visible towers.
-Core opens a separate conceptual data-centre cutaway with eight shared racks and
-network fabric. Numbered cards map the logical roles to the scene; they do not
-assign one function to one physical server.
+The Internet story follows the full request from phone uplink through radio,
+site equipment, fiber, transport and packet user plane to a generic data network,
+then animates every reverse handoff until the phone displays **Page loaded**.
+Core and transport are explained only through their roles in these two stories;
+they are not separate scenarios or claims about physical deployment.
 
 Cyan paths are conceptual control/call-setup signalling, green paths are established
-voice media, and amber paths or highlights are synchronization and availability
+voice media or service traffic, and amber paths or highlights are synchronization and availability
 support—not user traffic. Reduced-motion preferences replace moving path progress
 with stepped static state.
 The same preference also stops walk cycles and handset vibration, and replaces
@@ -123,18 +123,18 @@ accessible SVG/HTML overlay and panel.
 
 `src/story/actors.js` builds the procedural person and handset;
 `phone.js` synchronizes the inset; `rf.js` computes the four curved fronts;
-`ground-path.js` resolves physical handoffs from the source mesh bounds;
-`scenes.js` builds the grounded transport and separate core contexts; and `copy.js`
+`ground-path.js` resolves physical handoffs and the grounded operator-network strip;
+and `copy.js`
 provides Simple/Technical copy. These shapes live under `storyActors`, outside the
 selectable source inventory, and never receive asset IDs. Scenario JSON declares
 each stage's actor, phone and radio state. The controller derives deterministic
 motion from timeline progress. Projection refreshes during camera movement,
 including while playback is paused.
 
-Journey caller, phone, service/core, data-centre and transport nodes are teaching
-overlays only: they are not physical topology, do not imply one logical function
-per server, and are never added to the 32-mesh inventory. Paging is conditional;
-DU/CU placement, transport routing/protection and microwave use vary by deployment.
+Journey caller, phone, service/core and transport nodes are teaching overlays only:
+they are not physical topology, do not imply one logical function per server, and
+are never added to the 32-mesh inventory. Paging is conditional; DU/CU placement
+and transport routing vary by deployment.
 The scenarios contain no operator locations, capacity, configuration, alarms,
 coordinates or live data.
 
@@ -155,8 +155,8 @@ the realism CDP suite. `npm run verify:realism` runs the realism suite alone;
 local Chrome harness, with no new dependency, downloaded asset or browser install.
 
 Realism unit tests cover grounding, human scale, phone attachment, exact antenna
-anchors, physical route handoffs, four wavefronts, bidirectional media, cross-section
-and cutaway structure, declarative state, stage order and reduced motion. CDP checks
+anchors, physical route handoffs, four wavefronts, bidirectional voice, directional
+Internet request/response paths, declarative state, stage order and reduced motion. CDP checks
 cover desktop and 390×844, the explanation toggle, Answer, live motion preference
 changes, playback and pause, and restoration of the original 32 meshes/11 assets.
 They also hash stage-only screenshot samples to prove ground-path and RF pixels change
@@ -172,10 +172,10 @@ node scripts/record-realism.mjs green node --test tests/realism.test.mjs
 node scripts/record-realism.mjs green node scripts/realism-browser-test.mjs
 ```
 
-Screenshots use `verification/realism-desktop-*.png` and
-`verification/realism-mobile-*.png`: approach, ground fiber, tower cable, ringing,
-conversation, paired RF animation frames, transport, microwave, core and reduced
-motion. Logs and screenshots remain local verification artifacts.
+Screenshots under `verification/` cover the outside-fence approach, ground fiber,
+tower cable, ringing, connected voice, Internet request/response, page loaded,
+Inspect-to-Journeys reset and reduced motion at desktop and mobile sizes. Logs and
+screenshots remain local verification artifacts.
 
 Illustrative, vendor-neutral teaching model. It does not represent an operator's
 actual topology, sites, routes, vendors, capacity, configuration, coverage,

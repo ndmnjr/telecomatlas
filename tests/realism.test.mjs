@@ -69,8 +69,9 @@ test('copy: every stage has plain language and technical equivalent without chan
   assert.equal(phoneViewModel(controller.getStoryState()).title, 'Connected');
 });
 
-test('routes: exact panel anchor, ground fiber and tray-to-tower handoffs, bidirectional media', async () => {
+test('routes: browse cycle follows exact direction, endpoints, ground fiber and tower cable', async () => {
   const { siteRoutes } = await import('../src/story/ground-path.js');
+  const { DIRECTION, JOURNEY_PATHS } = await import('../src/scenarios/paths.js');
   const phone = new T.Vector3(3.78, 1.17, 3.605);
   const routes = siteRoutes(parts, phone);
   const panel = parts.find((p) => p.sourceName === 'Panel Antenna A');
@@ -79,18 +80,26 @@ test('routes: exact panel anchor, ground fiber and tray-to-tower handoffs, bidir
     panel.center.y,
     panel.bounds.max.z,
   ]);
-  const fiber = routes.paths['transport-to-ran'];
-  assert.ok(fiber.points[0].y <= 0.15);
-  for (const id of ['access-fiber', 'odf', 'site-router', 'DEMO-CABINET-01'])
-    assert.ok(
-      fiber.points.some((p) => p.equals(routes.anchors[id])),
-      id,
-    );
+  const fiber = routes.paths['browse-response-transport-to-access'];
+  assert.ok(fiber.points.every((point) => point.y <= routes.anchors.odf.y));
+  assert.ok(fiber.points[0].equals(routes.anchors['transport-cloud']));
+  assert.ok(fiber.points.at(-1).equals(routes.anchors['access-fiber']));
   const riser = routes.paths['ran-to-radio'].points;
   assert.ok(riser.some((p) => p.equals(parts.find((p) => p.sourceName === 'Cable Tray').center)));
   assert.ok(riser.at(-1).y > 5);
   for (const id of scenarios[0].stages.at(-1).paths)
     assert.equal(routes.paths[id].bidirectional, true);
+  for (const [id, definition] of Object.entries(JOURNEY_PATHS)) {
+    assert.equal(routes.paths[id].direction, definition.direction);
+    assert.equal(routes.paths[id].bidirectional, definition.direction === DIRECTION.BIDIRECTIONAL);
+    assert.deepEqual(
+      [routes.paths[id].from, routes.paths[id].to],
+      [definition.from, definition.to],
+      `${id} endpoint metadata`,
+    );
+    assert.ok(routes.paths[id].points[0].equals(routes.anchors[definition.from]), `${id} from`);
+    assert.ok(routes.paths[id].points.at(-1).equals(routes.anchors[definition.to]), `${id} to`);
+  }
   assert.ok(
     Object.values(routes.paths).every(
       (p) => !p.handoffs.some((id) => /POWER|SHELTER|TOWER/.test(id)),
@@ -98,62 +107,54 @@ test('routes: exact panel anchor, ground fiber and tray-to-tower handoffs, bidir
   );
 });
 
-test('rf: four curved wavefronts use exact antenna and phone endpoints, reverse media and static reduced motion', async () => {
+test('rf: four curved wavefronts use exact directional endpoints and static reduced motion', async () => {
   const { rfWavefronts } = await import('../src/story/rf.js');
-  const from = { x: 52, y: 118 },
-    to = { x: 271, y: 362 };
-  const a = rfWavefronts(from, to, 0.1, false, false);
-  const b = rfWavefronts(from, to, 0.3, false, false);
-  assert.deepEqual(a.from, from);
-  assert.deepEqual(a.to, to);
-  assert.equal(a.waves.length, 4);
-  assert.ok(a.waves.every((w) => w.d.includes(' Q ') && w.direction === 'outbound'));
-  assert.notDeepEqual(a.waves, b.waves);
-  assert.deepEqual(
-    rfWavefronts(from, to, 0.1, true, true),
-    rfWavefronts(from, to, 0.8, true, true),
+  const { DIRECTION } = await import('../src/scenarios/paths.js');
+  const sector = { x: 52, y: 118 },
+    phone = { x: 271, y: 362 };
+  const downlink = rfWavefronts(sector, phone, 0.1, false, DIRECTION.DOWNLINK);
+  const later = rfWavefronts(sector, phone, 0.3, false, DIRECTION.DOWNLINK);
+  assert.deepEqual(downlink.from, sector);
+  assert.deepEqual(downlink.to, phone);
+  assert.equal(downlink.waves.length, 4);
+  assert.ok(
+    downlink.waves.every((wave) => wave.d.includes(' Q ') && wave.direction === DIRECTION.DOWNLINK),
   );
+  assert.notDeepEqual(downlink.waves, later.waves);
   assert.deepEqual(
-    new Set(rfWavefronts(from, to, 0.2, false, true).waves.map((w) => w.direction)),
+    rfWavefronts(phone, sector, 0.1, true, DIRECTION.UPLINK),
+    rfWavefronts(phone, sector, 0.8, true, DIRECTION.UPLINK),
+  );
+  const uplink = rfWavefronts(phone, sector, 0.2, false, DIRECTION.UPLINK);
+  assert.deepEqual([uplink.from, uplink.to], [phone, sector]);
+  assert.deepEqual(new Set(uplink.waves.map((wave) => wave.direction)), new Set(['uplink']));
+  assert.deepEqual(
+    new Set(
+      rfWavefronts(sector, phone, 0.2, false, DIRECTION.BIDIRECTIONAL).waves.map(
+        (wave) => wave.direction,
+      ),
+    ),
     new Set(['outbound', 'inbound']),
   );
 });
 
-test('scenes: transport is a grounded cross-section with a second duct and two microwave towers; core is a separate cutaway', async () => {
-  const { createStoryScenes } = await import('../src/story/scenes.js');
-  const scenes = createStoryScenes(parts);
-  scenes.group.traverse((object) => assert.equal(object.userData.assetId, undefined));
-  const transport = scenes.model('transport');
-  for (const id of [
-    'site-to-router',
-    'router-to-odf',
-    'odf-to-access',
-    'access-to-aggregation',
-    'aggregation-to-metro',
-    'metro-to-datacenter',
-    'protection-route',
-  ])
-    assert.ok(
-      transport.paths[id].points.every((p) => p.y <= 0.35),
-      id,
-    );
-  assert.ok(transport.paths['protection-route'].points.some((p) => p.y < -0.5));
-  assert.equal(transport.paths['sync-service'].plane, 'support');
-  assert.equal(transport.towers.length, 2);
-  const microwave = transport.paths['microwave-branch'];
-  assert.deepEqual(microwave.points[0], transport.towers[0]);
-  assert.deepEqual(microwave.points.at(-1), transport.towers[1]);
-  scenes.update('core');
-  assert.equal(scenes.core.visible, true);
-  assert.equal(scenes.transport.visible, false);
-  assert.ok(scenes.core.getObjectByName('data-centre-exterior'));
-  assert.ok(scenes.core.getObjectByName('network-fabric'));
-  assert.equal(scenes.model('core').layers.length, 4);
-  assert.ok(scenes.model('core').rackCount > scenes.model('core').layers.length);
-  scenes.update('site');
-  assert.equal(scenes.core.visible, false);
-  assert.equal(scenes.transport.visible, false);
-  scenes.dispose();
+test('site network strip keeps only grounded transport, user-plane, Internet and patching roles', async () => {
+  const { createSiteNetworkStrip } = await import('../src/story/ground-path.js');
+  const strip = createSiteNetworkStrip();
+  assert.equal(strip.group.name, 'site-network-strip');
+  assert.deepEqual(
+    strip.group.children.map((object) => object.name),
+    [
+      'internet-data-network-edge',
+      'packet-user-plane-edge',
+      'transport-edge',
+      'fiber-patch-panel',
+      'site-router',
+      'radio-unit',
+    ],
+  );
+  strip.group.traverse((object) => assert.equal(object.userData.assetId, undefined));
+  strip.dispose();
 });
 
 test('state: declarative story survives scenario reordering and every visual stage has motion-independent text', async () => {
@@ -161,10 +162,10 @@ test('state: declarative story survives scenario reordering and every visual sta
   const { JOURNEY_PATHS, JOURNEY_TARGETS } = await import('../src/scenarios/paths.js');
   for (const scenario of scenarios)
     for (const stage of scenario.stages) {
-      assert.ok(['site', 'transport', 'core'].includes(scenario.storyContext));
+      assert.equal(scenario.storyContext, 'site');
       assert.ok(stage.story.phase && stage.story.phone && typeof stage.story.rf === 'boolean');
     }
-  const reordered = [scenarios[2], scenarios[0], scenarios[1]];
+  const reordered = [scenarios[1], scenarios[0]];
   const controller = createJourneyController(reordered);
   controller.selectScenario('incoming-call');
   controller.seekStage(6);

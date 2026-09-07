@@ -1,6 +1,6 @@
-import { sceneCaption } from '../story/scenes.js';
 import { pointOnRoute } from '../story/ground-path.js';
 import {
+  DIRECTION,
   JOURNEY_PATHS,
   JOURNEY_TARGETS,
   pathVisualState,
@@ -8,6 +8,11 @@ import {
 } from './paths.js';
 
 const unique = (values) => [...new Set(values)];
+
+export function pulseDirections(route) {
+  if (route.direction === DIRECTION.BIDIRECTIONAL) return ['outbound', 'inbound'];
+  return [route.direction ?? 'outbound'];
+}
 
 export function createOverlayModel(scenario, stage, projected = {}, progress = 0, reduced = false) {
   const pathIds = unique(scenario.stages.flatMap((item) => item.paths));
@@ -63,9 +68,7 @@ export function createJourneyOverlay(host, onInspect) {
   const support = document.createElement('div');
   support.className = 'story-support';
   support.textContent = 'Support only: power / shelter / tower structure';
-  const caption = document.createElement('section');
-  caption.className = 'story-scene-caption';
-  host.replaceChildren(svg, nodes, rf, operator, support, caption);
+  host.replaceChildren(svg, nodes, rf, operator, support);
 
   return {
     render(scenario, stage, projected, state, reduced, story = {}, technical = false) {
@@ -77,23 +80,12 @@ export function createJourneyOverlay(host, onInspect) {
         reduced,
       );
       host.dataset.context = story.context ?? '';
-      caption.hidden = !story.context || story.context === 'site';
-      caption.replaceChildren();
-      if (!caption.hidden) {
-        const copy = sceneCaption(story.context, technical);
-        const title = document.createElement('strong');
-        title.textContent = copy.title;
-        const text = document.createElement('p');
-        text.textContent = copy.text;
-        const cards = document.createElement('div');
-        cards.className = 'story-layer-cards';
-        copy.cards.forEach((value) => {
-          const card = document.createElement('span');
-          card.textContent = value;
-          cards.append(card);
-        });
-        caption.append(title, text, cards);
-      }
+
+      operator.textContent =
+        scenario.id === 'browse-internet'
+          ? 'Transport · Packet core / User plane · Internet / Data network — conceptual'
+          : 'Transport · Packet core / User plane · IMS — conceptual';
+      operator.dataset.service = scenario.id === 'browse-internet' ? 'internet' : 'ims';
       operator.hidden = story.context !== 'site';
       support.hidden = story.context !== 'site';
       const edge = story.anchors?.['transport-cloud'];
@@ -116,15 +108,6 @@ export function createJourneyOverlay(host, onInspect) {
         }
       svg.replaceChildren();
       nodes.replaceChildren();
-      for (const item of story.annotations ?? []) {
-        const marker = document.createElement('span');
-        marker.className = 'story-map-number';
-        marker.textContent = String(item.number);
-        marker.style.left = `${item.x}%`;
-        marker.style.top = `${item.y}%`;
-        marker.setAttribute('aria-hidden', 'true');
-        nodes.append(marker);
-      }
       for (const path of model.paths) {
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         line.dataset.path = path.id;
@@ -144,7 +127,7 @@ export function createJourneyOverlay(host, onInspect) {
         line.style.setProperty('--path-progress', path.visual.offset);
         svg.append(line);
         if (route && path.active) {
-          const directions = route.bidirectional ? ['outbound', 'inbound'] : ['outbound'];
+          const directions = pulseDirections(route);
           for (const direction of directions) {
             const fraction = reduced
               ? direction === 'inbound'
@@ -205,7 +188,7 @@ export function createJourneyOverlay(host, onInspect) {
       svg.replaceChildren();
       nodes.replaceChildren();
       rf.replaceChildren();
-      operator.hidden = support.hidden = caption.hidden = true;
+      operator.hidden = support.hidden = true;
       delete host.dataset.plane;
     },
   };

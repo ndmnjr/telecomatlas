@@ -3,8 +3,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { validateScenarios } from '../src/scenarios/schema.js';
 import { createJourneyController } from '../src/scenarios/controller.js';
-import { JOURNEY_PATHS, JOURNEY_TARGETS, pathVisualState } from '../src/scenarios/paths.js';
-import { createOverlayModel } from '../src/scenarios/overlay.js';
+import {
+  DIRECTION,
+  JOURNEY_PATHS,
+  JOURNEY_TARGETS,
+  pathVisualState,
+} from '../src/scenarios/paths.js';
+import { createOverlayModel, pulseDirections } from '../src/scenarios/overlay.js';
 import { panelViewModel, journeyKeyAction } from '../src/scenarios/panel.js';
 
 const scenarios = JSON.parse(await fs.readFile('src/scenarios/scenarios.json', 'utf8'));
@@ -17,12 +22,12 @@ function validate(value = scenarios) {
   });
 }
 
-test('three synthetic vendor-neutral scenarios validate with unique contiguous stages', () => {
+test('two integrated service stories validate with unique contiguous stages', () => {
   const result = validate();
-  assert.equal(result.length, 3);
+  assert.equal(result.length, 2);
   assert.deepEqual(
     result.map((scenario) => scenario.id),
-    ['incoming-call', 'core-team', 'transport-fiber'],
+    ['incoming-call', 'browse-internet'],
   );
   for (const scenario of result) {
     assert.equal(scenario.scope, 'synthetic-vendor-neutral');
@@ -36,13 +41,35 @@ test('three synthetic vendor-neutral scenarios validate with unique contiguous s
 test('scenario standards sources are non-empty HTTPS links on official standards hosts', () => {
   const validated = validate();
   assert.deepEqual(
-    validated.map((scenario) => scenario.sources.map((source) => source.label)),
+    validated.map((scenario) => scenario.sources),
     [
-      ['3GPP VoLTE / VoNR overview', '3GPP TS 23.228', 'GSMA VoLTE'],
-      ['3GPP VoLTE / VoNR overview', '3GPP TS 23.228', 'GSMA VoLTE'],
-      ['ITU-T GSTR-TN5G', 'O-RAN WG4'],
+      [
+        {
+          label: '3GPP VoLTE / VoNR overview',
+          url: 'https://www.3gpp.org/technologies/volte-vonr',
+        },
+        {
+          label: '3GPP TS 23.228',
+          url: 'https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=821',
+        },
+        {
+          label: 'GSMA VoLTE',
+          url: 'https://www.gsma.com/solutions-and-impact/technologies/networks/ip_services/volte',
+        },
+      ],
+      [
+        {
+          label: '3GPP 5G System overview',
+          url: 'https://www.3gpp.org/technologies/5g-system-overview',
+        },
+        {
+          label: '3GPP TS 23.501',
+          url: 'https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3144',
+        },
+      ],
     ],
   );
+  assert.doesNotMatch(JSON.stringify(validated), /volte-vnr/);
 
   let bad = clone(scenarios);
   bad[0].sources[0].url = 'http://www.3gpp.org/technologies/volte-vonr';
@@ -84,29 +111,12 @@ test('schema rejects duplicate stages, missing targets, unknown paths, invalid e
   }
 });
 
-test('all path endpoints exist and exact transport and incoming-call mappings are stable', () => {
+test('all path endpoints exist and exact incoming-call mappings are stable', () => {
   for (const [id, path] of Object.entries(JOURNEY_PATHS)) {
     assert.ok(JOURNEY_TARGETS[path.from], `${id} from ${path.from}`);
     assert.ok(JOURNEY_TARGETS[path.to], `${id} to ${path.to}`);
   }
-  assert.deepEqual(
-    [
-      'site-to-router',
-      'router-to-odf',
-      'odf-to-access',
-      'access-to-aggregation',
-      'aggregation-to-metro',
-      'metro-to-datacenter',
-    ].map((id) => [JOURNEY_PATHS[id].from, JOURNEY_PATHS[id].to]),
-    [
-      ['DEMO-CABINET-01', 'site-router'],
-      ['site-router', 'odf'],
-      ['odf', 'access-fiber'],
-      ['access-fiber', 'aggregation'],
-      ['aggregation', 'metro-core'],
-      ['metro-core', 'data-center'],
-    ],
-  );
+
   assert.deepEqual(
     [
       'caller-to-ims',
@@ -181,69 +191,84 @@ test('incoming call distinguishes conditional paging, signalling, media and supp
   );
 });
 
-test('transport follows the functional order with green payload, dashed protection, amber sync and optional microwave', () => {
-  const transport = validate().find((scenario) => scenario.id === 'transport-fiber');
-  const payloadPaths = [
-    'site-to-router',
-    'router-to-odf',
-    'odf-to-access',
-    'access-to-aggregation',
-    'aggregation-to-metro',
-    'metro-to-datacenter',
+test('browse follows the full uplink-response cycle with RF, media and control planes', () => {
+  const browse = validate().find((scenario) => scenario.id === 'browse-internet');
+  assert.equal(browse.technology, 'Mobile data over 4G/5G — conceptual');
+  assert.deepEqual(
+    browse.stages.map((stage) => stage.id),
+    [
+      'open-website',
+      'send-uplink',
+      'convert-to-data',
+      'carry-fiber',
+      'route-internet',
+      'response-return',
+      'page-loaded',
+    ],
+  );
+  assert.deepEqual(
+    browse.stages.slice(0, 5).map((stage) => stage.activePlane),
+    ['control', 'control', 'control', 'control', 'control'],
+  );
+  assert.equal(browse.stages[browse.stages.length - 1].activePlane, 'media');
+  assert.equal(browse.stages[0].paths.length, 0);
+  assert.ok(browse.stages.some((stage) => stage.paths.includes('browse-uplink')));
+  assert.ok(browse.stages.some((stage) => stage.paths.includes('browse-response-sector-to-phone')));
+  assert.ok(browse.stages.some((stage) => stage.story.rf === true));
+  assert.equal(browse.stages[browse.stages.length - 1].story.phone, 'loaded');
+  assert.ok(browse.stages.every((stage) => stage.story && stage.story.phase));
+});
+
+test('browse request and response explicitly reverse every physical handoff', () => {
+  const browse = validate().find((scenario) => scenario.id === 'browse-internet');
+  const request = [
+    'browse-uplink',
+    'browse-request-sector-to-radio',
+    'browse-request-radio-to-cabinet',
+    'browse-request-cabinet-to-router',
+    'browse-request-router-to-odf',
+    'browse-request-odf-to-access',
+    'browse-request-access-to-transport',
+    'browse-request-transport-to-user-plane',
+    'browse-request-user-plane-to-internet',
   ];
+  const response = [
+    'browse-response-internet-to-user-plane',
+    'browse-response-user-plane-to-transport',
+    'browse-response-transport-to-access',
+    'browse-response-access-to-odf',
+    'browse-response-odf-to-router',
+    'browse-response-router-to-cabinet',
+    'browse-response-cabinet-to-radio',
+    'browse-response-radio-to-sector',
+    'browse-response-sector-to-phone',
+  ];
+  const endpoints = (ids) => ids.map((id) => [JOURNEY_PATHS[id].from, JOURNEY_PATHS[id].to]);
+  assert.deepEqual(endpoints(request), [
+    ['receiving-phone', 'DEMO-SECTOR-A'],
+    ['DEMO-SECTOR-A', 'radio-unit'],
+    ['radio-unit', 'DEMO-CABINET-01'],
+    ['DEMO-CABINET-01', 'site-router'],
+    ['site-router', 'odf'],
+    ['odf', 'access-fiber'],
+    ['access-fiber', 'transport-cloud'],
+    ['transport-cloud', 'user-plane'],
+    ['user-plane', 'internet-service'],
+  ]);
   assert.deepEqual(
-    transport.stages.slice(0, 5).map((stage) => stage.paths),
-    [
-      ['site-to-router'],
-      ['router-to-odf'],
-      ['odf-to-access'],
-      ['access-to-aggregation'],
-      ['aggregation-to-metro', 'metro-to-datacenter'],
-    ],
+    endpoints(response),
+    endpoints(request)
+      .toReversed()
+      .map(([from, to]) => [to, from]),
   );
-  assert.deepEqual(
-    [
-      'DEMO-CABINET-01',
-      'site-router',
-      'odf',
-      'access-fiber',
-      'aggregation',
-      'metro-core',
-      'data-center',
-    ].map((id) => JOURNEY_TARGETS[id].x),
-    [16, 28, 40, 53, 65, 77, 89],
-  );
-  assert.deepEqual(
-    transport.stages.slice(0, 5).map((stage) => stage.id),
-    ['site-handoff', 'patch-to-fiber', 'access-fiber', 'aggregate-sites', 'metro-core'],
-  );
-  assert.deepEqual(
-    transport.stages.slice(0, 5).map((stage) => stage.focus),
-    [
-      ['DEMO-CABINET-01', 'site-router'],
-      ['site-router', 'odf'],
-      ['odf', 'access-fiber'],
-      ['access-fiber', 'aggregation'],
-      ['aggregation', 'metro-core', 'data-center'],
-    ],
-  );
-  assert.ok(
-    transport.stages
-      .slice(0, 5)
-      .every((stage) => /media and service traffic/i.test(stage.narrative)),
-  );
-  assert.equal(JOURNEY_PATHS['site-to-odf'], undefined);
-  assert.equal(JOURNEY_PATHS['odf-to-router'], undefined);
-  assert.equal(JOURNEY_PATHS['router-to-access'], undefined);
-  assert.ok(payloadPaths.every((id) => JOURNEY_PATHS[id].plane === 'media'));
-  assert.ok(transport.stages.slice(0, 5).every((stage) => stage.activePlane === 'media'));
-  assert.ok(transport.stages.some((stage) => stage.paths.includes('protection-route')));
-  assert.equal(JOURNEY_PATHS['protection-route'].kind, 'protection');
-  assert.equal(JOURNEY_PATHS['protection-route'].plane, 'media');
-  assert.equal(JOURNEY_PATHS['sync-service'].plane, 'support');
-  assert.equal(JOURNEY_PATHS['microwave-branch'].plane, 'media');
-  assert.equal(JOURNEY_PATHS['microwave-branch'].optional, true);
-  assert.match(transport.disclaimer, /actual.*vary/i);
+  assert.ok(request.every((id) => JOURNEY_PATHS[id].direction === DIRECTION.UPLINK));
+  assert.ok(response.every((id) => JOURNEY_PATHS[id].direction === DIRECTION.DOWNLINK));
+  assert.deepEqual(browse.stages.find((stage) => stage.id === 'route-internet').paths, request);
+  assert.deepEqual(browse.stages.find((stage) => stage.id === 'response-return').paths, response);
+  assert.deepEqual(browse.stages.find((stage) => stage.id === 'page-loaded').paths, [
+    'browse-response-radio-to-sector',
+    'browse-response-sector-to-phone',
+  ]);
 });
 
 test('controller play, pause, previous, next, seek and scenario selection are deterministic', () => {
@@ -270,8 +295,8 @@ test('controller play, pause, previous, next, seek and scenario selection are de
   assert.equal(controller.getState().stageIndex, 1);
   controller.seek(0.75);
   assert.equal(controller.getState().stageIndex, 6);
-  controller.selectScenario('core-team');
-  assert.equal(controller.getScenario().id, 'core-team');
+  controller.selectScenario('browse-internet');
+  assert.equal(controller.getScenario().id, 'browse-internet');
   assert.equal(controller.getState().stageIndex, 0);
 });
 
@@ -300,6 +325,16 @@ test('reduced motion path state is stepped and never continuously animated', () 
   });
 });
 
+test('pulse directions exactly follow controlled route direction metadata', () => {
+  assert.deepEqual(pulseDirections({ direction: DIRECTION.UPLINK }), ['uplink']);
+  assert.deepEqual(pulseDirections({ direction: DIRECTION.DOWNLINK }), ['downlink']);
+  assert.deepEqual(pulseDirections({ direction: DIRECTION.BIDIRECTIONAL }), [
+    'outbound',
+    'inbound',
+  ]);
+  assert.deepEqual(pulseDirections({}), ['outbound']);
+});
+
 test('inventory overlay labels remain physical and do not imply cooling or grounding meshes', () => {
   assert.equal(JOURNEY_TARGETS['DEMO-SHELTER-01'].label, 'Equipment shelter');
   assert.equal(JOURNEY_TARGETS['DEMO-TOWER-01'].label, 'Tower structure');
@@ -315,10 +350,7 @@ test('overlay model exposes each scenario target and separates path planes and s
     for (const stage of scenario.stages) {
       const model = createOverlayModel(scenario, stage, { 'DEMO-SECTOR-A': { x: 61, y: 21 } });
       assert.ok(model.nodes.every((node) => node.label && Number.isFinite(node.x)));
-      assert.deepEqual(
-        model.activePaths.map((path) => path.id),
-        stage.paths,
-      );
+      assert.deepEqual(model.activePaths.map((path) => path.id).sort(), [...stage.paths].sort());
       assert.ok(
         model.nodes.filter((node) => node.active).every((node) => stage.focus.includes(node.id)),
       );

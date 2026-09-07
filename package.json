@@ -8,10 +8,11 @@
     "lint": "node scripts/check.mjs && prettier --check \"src/**/*.js\" \"src/**/*.json\" \"scripts/*.mjs\" \"tests/*.mjs\" index.html styles.css package.json .prettierrc.json",
     "build": "node scripts/build.mjs",
     "start": "node scripts/serve.mjs",
-    "verify": "node scripts/browser-test.mjs && node scripts/journey-browser-test.mjs && node scripts/realism-browser-test.mjs",
+    "verify": "node scripts/browser-test.mjs && node scripts/journey-browser-test.mjs && node scripts/realism-browser-test.mjs && node scripts/journey-v2-browser-test.mjs",
     "verify:journeys": "node scripts/journey-browser-test.mjs",
     "verify:realism": "node scripts/realism-browser-test.mjs",
-    "verify:errors": "node scripts/error-test.mjs"
+    "verify:errors": "node scripts/error-test.mjs",
+    "verify:journeys:v2": "node scripts/journey-v2-browser-test.mjs"
   },
   "dependencies": {
     "three": "0.180.0"

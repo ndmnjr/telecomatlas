@@ -1,5 +1,5 @@
 const PLANES = new Set(['control', 'media', 'support', 'mixed']);
-const CAMERAS = new Set(['site-wide', 'sector-a', 'cabinet', 'core-diagram', 'transport-diagram']);
+const CAMERAS = new Set(['site-wide', 'sector-a', 'cabinet']);
 const SOURCE_HOSTS = new Set([
   '3gpp.org',
   'www.3gpp.org',
@@ -54,14 +54,13 @@ function sourceUrl(value, label) {
 
 export function validateScenarios(input, registries) {
   inspectPublicFields(input);
-  if (!Array.isArray(input) || input.length !== 3) fail('expected exactly three scenarios');
+  if (!Array.isArray(input) || input.length !== 2) fail('expected exactly two scenarios');
   const targets = registries?.targets ?? {};
   const paths = registries?.paths ?? {};
   const scenarioIds = new Set();
   for (const scenario of input) {
     text(scenario.id, 'scenario id');
-    if (!['site', 'core', 'transport'].includes(scenario.storyContext))
-      fail('invalid story context');
+    if (scenario.storyContext !== 'site') fail('invalid story context');
     text(scenario.title, `${scenario.id} title`);
     text(scenario.scope, `${scenario.id} scope`);
     text(scenario.disclaimer, `${scenario.id} disclaimer`);
@@ -81,7 +80,9 @@ export function validateScenarios(input, registries) {
       text(stage.id, `${scenario.id} stage id`);
       if (
         !stage.story ||
-        !['idle', 'ringing', 'connected'].includes(stage.story.phone) ||
+        !['idle', 'ringing', 'connected', 'loaded', 'opening', 'loading'].includes(
+          stage.story.phone,
+        ) ||
         typeof stage.story.rf !== 'boolean'
       )
         fail(`${stage.id} invalid story state`);

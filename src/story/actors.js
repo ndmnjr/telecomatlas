@@ -7,6 +7,16 @@ export function createStoryActors(parts) {
   person.name = 'person';
   group.add(person);
   const groundY = parts.find((p) => p.sourceName === 'Ground').bounds.max.y;
+
+  // Derive Fence and Access Gate world Box3 for nonintersection validation.
+  const fencePart = parts.find((p) => p.sourceName === 'Fence');
+  const gatePart = parts.find((p) => p.sourceName === 'Access Gate');
+  const fenceBox = fencePart ? new T.Box3().setFromObject(fencePart.mesh) : null;
+  const gateBox = gatePart ? new T.Box3().setFromObject(gatePart.mesh) : null;
+  const boundaryBox = new T.Box3();
+  if (fenceBox) boundaryBox.union(fenceBox);
+  if (gateBox) boundaryBox.union(gateBox);
+
   const materials = {
     skin: new T.MeshStandardMaterial({ color: '#b77f5b', roughness: 0.9 }),
     shirt: new T.MeshStandardMaterial({ color: '#d76b38', roughness: 0.85 }),
@@ -40,6 +50,12 @@ export function createStoryActors(parts) {
   const hand = box(person, 'hand', [0.14, 0.14, 0.12], [0.28, 1.11, 0.38], 'skin');
   const phone = box(hand, 'handheld-phone', [0.09, 0.18, 0.025], [0, 0.06, 0.025], 'phone');
   box(phone, 'phone-screen', [0.075, 0.15, 0.005], [0, 0, 0.016], 'screen');
+
+  // Person must stay clearly lateral outside the fence.
+  // Position: x=6.5 (stationary) to x=7.5 (walking start), z=2.6, lateral to fence.
+  const PERSON_X_STATIONARY = 6.5;
+  const PERSON_X_WALKING_START = 7.5;
+
   let current;
   return {
     group,
@@ -50,7 +66,8 @@ export function createStoryActors(parts) {
       current = story;
       group.visible = story.context === 'site';
       const walking = story.phase === 'approach' && !story.reduced;
-      person.position.set(6.1 - (walking ? story.progress : 1), groundY, 2.6);
+      const personX = walking ? PERSON_X_WALKING_START - story.progress : PERSON_X_STATIONARY;
+      person.position.set(personX, groundY, 2.6);
       legs.forEach((leg, i) => {
         leg.rotation.x = walking ? Math.sin(story.progress * Math.PI * 4 + i * Math.PI) * 0.16 : 0;
       });
@@ -68,6 +85,9 @@ export function createStoryActors(parts) {
     },
     audit() {
       group.updateMatrixWorld(true);
+      const personBounds = new T.Box3().setFromObject(person);
+      const intersectingFence = fenceBox && personBounds.intersectsBox(fenceBox);
+      const intersectingGate = gateBox && personBounds.intersectsBox(gateBox);
       return {
         person: person.position.toArray(),
         footY: Math.min(...legs.map((leg) => new T.Box3().setFromObject(leg).min.y)),
@@ -77,6 +97,10 @@ export function createStoryActors(parts) {
           .getWorldPosition(new T.Vector3())
           .distanceTo(hand.getWorldPosition(new T.Vector3())),
         pose: current?.reduced ? 'static' : current?.phase,
+        fenceIntersection: intersectingFence,
+        gateIntersection: intersectingGate,
+        personBoundsMin: personBounds.min.toArray(),
+        personBoundsMax: personBounds.max.toArray(),
       };
     },
     dispose() {

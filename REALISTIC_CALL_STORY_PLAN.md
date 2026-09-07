@@ -98,8 +98,7 @@ Transition away from the site into a dedicated conceptual data-centre cutaway:
 - `src/story/actors.js` — procedural person, walk pose and phone.
 - `src/story/phone.js` — synchronized readable phone inset and ringing state.
 - `src/story/rf.js` — world/projected antenna-to-phone RF wavefronts.
-- `src/story/ground-path.js` — fiber, cabinet and tower path effects.
-- `src/story/scenes.js` — site, transport and core visual contexts.
+- `src/story/ground-path.js` — grounded operator strip plus integrated fiber, cabinet, tower and service-route effects; standalone Core/Transport contexts were removed in Journeys V2.
 - `src/story/copy.js` — simple/technical label pairs.
 - Extend the Journey controller with deterministic actor/effect state while keeping scenario data declarative.
 

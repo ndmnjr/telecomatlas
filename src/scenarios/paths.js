@@ -8,31 +8,44 @@ export const JOURNEY_TARGETS = Object.freeze({
   'transport-cloud': target('Transport network', 'conceptual', 71, 38),
   'radio-unit': target('Radio unit', 'conceptual', 82, 56),
   'receiving-phone': target('Receiving phone', 'conceptual', 88, 25),
-  'policy-quality': target('Policy & quality', 'conceptual', 43, 47),
-  'user-plane': target('User plane / media', 'conceptual', 62, 54),
-  operations: target('Operations & resilience', 'conceptual', 43, 76),
-  interconnect: target('Interconnect edge', 'conceptual', 13, 35),
-  'data-center': target('Conceptual data centre', 'conceptual', 89, 33),
+  'user-plane': target('Packet user plane / core', 'conceptual', 62, 54),
+  'internet-service': target('Internet / data network', 'conceptual', 56, 15),
   'site-router': target('Site router / switch', 'conceptual', 28, 33),
   odf: target('ODF / patching', 'conceptual', 40, 33),
   'access-fiber': target('Access fiber', 'conceptual', 53, 33),
-  aggregation: target('Aggregation', 'conceptual', 65, 33),
-  'metro-core': target('Metro / core transport', 'conceptual', 77, 33),
-  'protection-node': target('Protection route', 'conceptual', 64, 68),
-  'sync-source': target('Synchronization service', 'conceptual', 51, 76),
-  'microwave-network': target('Optional microwave backhaul', 'conceptual', 46, 9),
   'DEMO-CABINET-01': target('Site equipment / baseband-DU', 'inventory', 16, 48),
   'DEMO-SECTOR-A': target('Serving sector antenna', 'inventory', 86, 42),
   'DEMO-POWER-01': target('Power & batteries', 'inventory', 18, 76),
   'DEMO-SHELTER-01': target('Equipment shelter', 'inventory', 26, 76),
   'DEMO-TRAY-01': target('Site cable route', 'inventory', 21, 59),
-  'DEMO-DISH-01': target('Site microwave dish', 'inventory', 23, 16),
   'DEMO-TOWER-01': target('Tower structure', 'inventory', 34, 76),
-  'DEMO-FENCE-01': target('Physical boundary', 'inventory', 11, 76),
-  'DEMO-CAMERA-01': target('Site observation', 'inventory', 42, 76),
 });
 
-const path = (from, to, plane, extras = {}) => Object.freeze({ from, to, plane, ...extras });
+export const DIRECTION = Object.freeze({
+  UPLINK: 'uplink',
+  DOWNLINK: 'downlink',
+  BIDIRECTIONAL: 'bidirectional',
+});
+
+const directionValues = Object.values(DIRECTION);
+
+function validateDirection(direction) {
+  if (!directionValues.includes(direction)) {
+    throw Error(
+      'Invalid direction: ' + direction + '. Must be one of: ' + directionValues.join(', '),
+    );
+  }
+  return direction;
+}
+
+const path = (from, to, plane, extras = {}) => {
+  const result = Object.freeze({ from, to, plane, ...extras });
+  if (extras.direction) validateDirection(extras.direction);
+  return result;
+};
+const uplink = (from, to) => path(from, to, 'control', { direction: DIRECTION.UPLINK });
+const downlink = (from, to) => path(from, to, 'media', { direction: DIRECTION.DOWNLINK });
+
 export const JOURNEY_PATHS = Object.freeze({
   'caller-to-ims': path('remote-caller', 'ims-service', 'control'),
   'ims-to-subscriber': path('ims-service', 'subscriber-session', 'control'),
@@ -42,28 +55,42 @@ export const JOURNEY_PATHS = Object.freeze({
   'ran-to-radio': path('DEMO-CABINET-01', 'radio-unit', 'control'),
   'radio-to-sector': path('radio-unit', 'DEMO-SECTOR-A', 'control'),
   'sector-to-phone': path('DEMO-SECTOR-A', 'receiving-phone', 'control'),
-  'media-caller-to-user-plane': path('remote-caller', 'user-plane', 'media'),
-  'media-user-plane-to-transport': path('user-plane', 'transport-cloud', 'media'),
-  'media-transport-to-site': path('transport-cloud', 'DEMO-CABINET-01', 'media'),
-  'media-site-to-radio': path('DEMO-CABINET-01', 'radio-unit', 'media'),
-  'media-radio-to-sector': path('radio-unit', 'DEMO-SECTOR-A', 'media'),
-  'media-sector-to-phone': path('DEMO-SECTOR-A', 'receiving-phone', 'media'),
-  'interconnect-to-ims': path('interconnect', 'ims-service', 'control'),
-  'ims-to-policy': path('ims-service', 'policy-quality', 'control'),
-  'policy-to-user-plane': path('policy-quality', 'user-plane', 'control'),
-  'user-plane-to-site': path('user-plane', 'DEMO-CABINET-01', 'media'),
-  'operations-support': path('operations', 'ims-service', 'support'),
-  'site-to-router': path('DEMO-CABINET-01', 'site-router', 'media'),
-  'router-to-odf': path('site-router', 'odf', 'media'),
-  'odf-to-access': path('odf', 'access-fiber', 'media'),
-  'access-to-aggregation': path('access-fiber', 'aggregation', 'media'),
-  'aggregation-to-metro': path('aggregation', 'metro-core', 'media'),
-  'metro-to-datacenter': path('metro-core', 'data-center', 'media'),
-  'protection-route': path('site-router', 'metro-core', 'media', { kind: 'protection' }),
-  'sync-service': path('sync-source', 'site-router', 'support', { kind: 'service' }),
-  'microwave-branch': path('DEMO-DISH-01', 'microwave-network', 'media', {
-    optional: true,
+  'media-caller-to-user-plane': path('remote-caller', 'user-plane', 'media', {
+    direction: DIRECTION.BIDIRECTIONAL,
   }),
+  'media-user-plane-to-transport': path('user-plane', 'transport-cloud', 'media', {
+    direction: DIRECTION.BIDIRECTIONAL,
+  }),
+  'media-transport-to-site': path('transport-cloud', 'DEMO-CABINET-01', 'media', {
+    direction: DIRECTION.BIDIRECTIONAL,
+  }),
+  'media-site-to-radio': path('DEMO-CABINET-01', 'radio-unit', 'media', {
+    direction: DIRECTION.BIDIRECTIONAL,
+  }),
+  'media-radio-to-sector': path('radio-unit', 'DEMO-SECTOR-A', 'media', {
+    direction: DIRECTION.BIDIRECTIONAL,
+  }),
+  'media-sector-to-phone': path('DEMO-SECTOR-A', 'receiving-phone', 'media', {
+    direction: DIRECTION.BIDIRECTIONAL,
+  }),
+  'browse-uplink': uplink('receiving-phone', 'DEMO-SECTOR-A'),
+  'browse-request-sector-to-radio': uplink('DEMO-SECTOR-A', 'radio-unit'),
+  'browse-request-radio-to-cabinet': uplink('radio-unit', 'DEMO-CABINET-01'),
+  'browse-request-cabinet-to-router': uplink('DEMO-CABINET-01', 'site-router'),
+  'browse-request-router-to-odf': uplink('site-router', 'odf'),
+  'browse-request-odf-to-access': uplink('odf', 'access-fiber'),
+  'browse-request-access-to-transport': uplink('access-fiber', 'transport-cloud'),
+  'browse-request-transport-to-user-plane': uplink('transport-cloud', 'user-plane'),
+  'browse-request-user-plane-to-internet': uplink('user-plane', 'internet-service'),
+  'browse-response-internet-to-user-plane': downlink('internet-service', 'user-plane'),
+  'browse-response-user-plane-to-transport': downlink('user-plane', 'transport-cloud'),
+  'browse-response-transport-to-access': downlink('transport-cloud', 'access-fiber'),
+  'browse-response-access-to-odf': downlink('access-fiber', 'odf'),
+  'browse-response-odf-to-router': downlink('odf', 'site-router'),
+  'browse-response-router-to-cabinet': downlink('site-router', 'DEMO-CABINET-01'),
+  'browse-response-cabinet-to-radio': downlink('DEMO-CABINET-01', 'radio-unit'),
+  'browse-response-radio-to-sector': downlink('radio-unit', 'DEMO-SECTOR-A'),
+  'browse-response-sector-to-phone': downlink('DEMO-SECTOR-A', 'receiving-phone'),
 });
 
 export function pathVisualState(pathDefinition, progress, reducedMotion) {

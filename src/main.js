@@ -168,9 +168,14 @@ function setMode(mode) {
   $('#journey-overlay').hidden = !state.journey;
   if (state.journey) {
     state.amount = 0;
+    state.selected = null;
     state.isolate = false;
     explode(0);
     journeyOverlay.clear();
+    // Entering Journeys is a deterministic reset, not a continuation of the
+    // previously selected service story.
+    journeyController.selectScenario('incoming-call');
+    view?.clearJourney();
     renderJourney();
   } else {
     journeyController?.pause();

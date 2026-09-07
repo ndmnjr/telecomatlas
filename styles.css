@@ -1231,39 +1231,6 @@ body:not([data-mode='journeys']) .story-phone {
   }
 }
 
-.story-scene-caption {
-  position: absolute;
-  top: 18px;
-  left: 18px;
-  right: 18px;
-  color: #254c43;
-}
-.story-scene-caption > strong {
-  font:
-    24px Georgia,
-    serif;
-}
-.story-scene-caption p {
-  font-size: 12px;
-  max-width: 600px;
-  margin: 8px 0;
-}
-.story-layer-cards {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.story-layer-cards span {
-  background: #f7faf3e8;
-  border: 1px solid #b5c7b8;
-  border-radius: 4px;
-  padding: 7px 9px;
-  font-size: 11px;
-}
-#journey-overlay[data-context='core'] .journey-node-label,
-#journey-overlay[data-context='transport'] .journey-node-label {
-  display: none;
-}
 .story-support {
   top: 9px;
   bottom: auto;
@@ -1271,25 +1238,6 @@ body:not([data-mode='journeys']) .story-phone {
   max-width: none;
 }
 @media (max-width: 720px) {
-  .story-scene-caption {
-    top: 12px;
-    left: 12px;
-    right: 12px;
-  }
-  .story-scene-caption > strong {
-    font-size: 21px;
-  }
-  .story-scene-caption p {
-    font-size: 11px;
-  }
-  .story-layer-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-  .story-layer-cards span {
-    padding: 5px;
-    font-size: 10px;
-  }
   .story-support {
     font-size: 9px;
     top: 8px;
@@ -1300,33 +1248,6 @@ body:not([data-mode='journeys']) .story-phone {
 body[data-mode='journeys'] .stage-watermark {
   display: none;
 }
-.story-map-number {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: grid;
-  place-items: center;
-  background: #f7faf3;
-  color: #254c43;
-  border: 1px solid #58796e;
-  font:
-    11px Consolas,
-    monospace;
-  z-index: 3;
-}
-#journey-overlay[data-context='transport'] .journey-node-marker,
-#journey-overlay[data-context='core'] .journey-node-marker {
-  opacity: 0;
-}
-#journey-overlay[data-context='transport'] .journey-node[data-active='true'] .journey-node-marker,
-#journey-overlay[data-context='core'] .journey-node[data-active='true'] .journey-node-marker {
-  opacity: 1;
-  width: 26px;
-  height: 26px;
-}
-
 .story-pulse[data-plane='support'] {
   fill: #bc8828;
 }

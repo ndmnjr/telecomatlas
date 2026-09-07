@@ -34,57 +34,34 @@ const copy = {
     'Carry the conversation',
     'After answer, voice travels in both directions: phone ↔ serving antenna ↔ radio ↔ tower cable ↔ site cabinet ↔ router ↔ fiber patch panel ↔ access fiber ↔ operator network. Power, shelter and tower structure support the service and sit outside the traffic path.',
   ],
-  'interconnect-edge': [
-    'Receive the call request',
-    'Inside a separate conceptual data centre, the network accepts a request from another network.',
+
+  'open-website': [
+    'Open a website',
+    'A person uses the visible phone outside the fence. The browser request starts at the phone.',
   ],
-  'ims-control': [
-    'Coordinate the call',
-    'Service control coordinates call setup. The labeled layers represent logical roles shared across computing infrastructure.',
+  'send-uplink': [
+    'Send the request by radio',
+    'Uplink RF travels from the phone to the sector antenna. The radio signal carries the request upward.',
   ],
-  'subscriber-mobility': [
-    'Find the right connection',
-    'Subscriber and session information helps the network reach the phone. No personal records are shown.',
+  'convert-to-data': [
+    'Turn radio into data',
+    'Radio and baseband processing convert the request into data the network can route.',
   ],
-  'policy-quality': [
-    'Arrange service treatment',
-    'Policy functions coordinate how the network treats the call. These are teaching layers, not individual physical servers.',
+  'carry-fiber': [
+    'Carry it through fiber',
+    'The request passes through the cabinet, site router, fiber patch panel and access fiber toward the transport network.',
   ],
-  'route-media': [
-    'Carry the voice',
-    'The user-traffic layer carries the conversation toward the access network and site. The rack fabric represents shared infrastructure.',
+  'route-internet': [
+    'Route it to the Internet',
+    'Packet core and user plane forward the request toward a generic Internet service.',
   ],
-  'observe-resilience': [
-    'Keep the service available',
-    'Operations and resilience support service availability. The amber support path carries no user conversation.',
+  'response-return': [
+    'Bring the response back',
+    'The response returns through transport, fiber, site equipment and radio to the serving sector.',
   ],
-  'site-handoff': [
-    'Leave the equipment cabinet',
-    'The cabinet hands conversation and other service traffic to the site router at ground level.',
-  ],
-  'patch-to-fiber': [
-    'Connect to the fiber',
-    'The router connects through a fiber patch panel at the site boundary.',
-  ],
-  'access-fiber': [
-    'Travel through buried fiber',
-    'Traffic follows the duct below ground toward a nearby aggregation building. The section reveals a route normally hidden underground.',
-  ],
-  'aggregate-sites': [
-    'Join traffic from other sites',
-    'The aggregation building combines traffic from several access connections before passing it onward.',
-  ],
-  'metro-core': [
-    'Cross the wider network',
-    'Traffic continues through the city and regional network toward a conceptual data centre. This is a sequence of handoffs, not one direct cable.',
-  ],
-  'protect-and-synchronize': [
-    'Provide another route and timing',
-    'The second dashed ground route represents protection. The amber timing service supports equipment synchronization and carries no user traffic. Actual protection varies.',
-  ],
-  'optional-microwave': [
-    'Cross between two towers',
-    'An optional line-of-sight microwave link joins two visible towers. It can complement or replace a fiber segment; its use varies by deployment.',
+  'page-loaded': [
+    'Show the page',
+    'The synchronized phone inset displays a neutral Page loaded state.',
   ],
 };
 const technicalTitles = {
@@ -96,6 +73,13 @@ const technicalTitles = {
   'convert-to-radio': 'Radio unit and sector RF',
   'radio-link': 'Sector RF link / incoming call',
   'connected-conversation': 'Established voice media',
+  'open-website': 'UE / RF uplink request',
+  'send-uplink': 'UE / RF uplink',
+  'convert-to-data': 'Radio / baseband-DU processing',
+  'carry-fiber': 'Backhaul / ODF / router',
+  'route-internet': 'UPF or packet user plane and data network',
+  'response-return': 'Downlink RF and data transport',
+  'page-loaded': 'UE display / content delivery',
 };
 export function stageCopy(stage, technical = false) {
   const [title, text] = copy[stage.id];
@@ -105,6 +89,5 @@ export function stageCopy(stage, technical = false) {
 }
 export const scenarioTitles = {
   'incoming-call': 'Incoming call',
-  'core-team': 'Inside the network',
-  'transport-fiber': 'Transport & fiber',
+  'browse-internet': 'Browse the Internet',
 };

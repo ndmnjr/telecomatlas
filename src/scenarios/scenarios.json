@@ -169,257 +169,179 @@
     "storyContext": "site"
   },
   {
-    "id": "core-team",
-    "title": "Core team",
-    "question": "What does the Core team do?",
+    "id": "browse-internet",
+    "title": "Browse the Internet",
+    "question": "What happens when you browse the web?",
     "scope": "synthetic-vendor-neutral",
-    "technology": "Logical service functions — conceptual",
-    "disclaimer": "Logical network functions are not individual physical servers, and this diagram does not depict a real operator data centre.",
+    "technology": "Mobile data over 4G/5G — conceptual",
+    "disclaimer": "A teaching sequence, not a literal packet trace; function placement and radio splits vary by architecture.",
     "sources": [
       {
-        "label": "3GPP VoLTE / VoNR overview",
-        "url": "https://www.3gpp.org/technologies/volte-vonr"
+        "label": "3GPP 5G System overview",
+        "url": "https://www.3gpp.org/technologies/5g-system-overview"
       },
       {
-        "label": "3GPP TS 23.228",
-        "url": "https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=821"
-      },
-      {
-        "label": "GSMA VoLTE",
-        "url": "https://www.gsma.com/solutions-and-impact/technologies/networks/ip_services/volte"
+        "label": "3GPP TS 23.501",
+        "url": "https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3144"
       }
     ],
     "stages": [
       {
-        "id": "interconnect-edge",
+        "id": "open-website",
         "order": 1,
-        "label": "Accept the service request",
-        "narrative": "A conceptual interconnect edge exchanges the incoming request with IMS service control.",
-        "focus": ["interconnect", "ims-service"],
+        "label": "Open a website",
+        "narrative": "A person uses the visible phone outside the fence. The browser request starts at the phone.",
+        "focus": ["receiving-phone"],
         "support": [],
-        "paths": ["interconnect-to-ims"],
+        "paths": [],
         "activePlane": "control",
-        "camera": "core-diagram",
+        "camera": "site-wide",
         "story": {
-          "phase": "interconnect-edge",
-          "phone": "idle",
+          "phase": "browse-open",
+          "phone": "opening",
           "rf": false
         }
       },
       {
-        "id": "ims-control",
+        "id": "send-uplink",
         "order": 2,
-        "label": "Control the IMS session",
-        "narrative": "Proxy, interrogating and serving session-control roles coordinate SIP signalling and telephony services as logical functions.",
-        "focus": ["ims-service"],
-        "support": [],
-        "paths": ["caller-to-ims"],
-        "activePlane": "control",
-        "camera": "core-diagram",
-        "story": {
-          "phase": "ims-control",
-          "phone": "idle",
-          "rf": false
-        }
-      },
-      {
-        "id": "subscriber-mobility",
-        "order": 3,
-        "label": "Resolve identity and reachability",
-        "narrative": "Subscriber, registration and mobility or session functions help locate the service endpoint without exposing real records.",
-        "focus": ["subscriber-session", "packet-core"],
-        "support": [],
-        "paths": ["ims-to-subscriber", "subscriber-to-core"],
-        "activePlane": "control",
-        "camera": "core-diagram",
-        "story": {
-          "phase": "subscriber-mobility",
-          "phone": "idle",
-          "rf": false
-        }
-      },
-      {
-        "id": "policy-quality",
-        "order": 4,
-        "label": "Coordinate policy and quality",
-        "narrative": "Service policy and quality coordination prepare appropriate treatment; no real configuration or KPI is shown.",
-        "focus": ["policy-quality", "user-plane"],
-        "support": [],
-        "paths": ["ims-to-policy", "policy-to-user-plane"],
-        "activePlane": "control",
-        "camera": "core-diagram",
-        "story": {
-          "phase": "policy-quality",
-          "phone": "idle",
-          "rf": false
-        }
-      },
-      {
-        "id": "route-media",
-        "order": 5,
-        "label": "Route established media",
-        "narrative": "User-plane functions carry the established green media path toward the access network and serving site.",
-        "focus": ["user-plane", "DEMO-CABINET-01"],
-        "support": [],
-        "paths": ["user-plane-to-site"],
-        "activePlane": "media",
-        "camera": "core-diagram",
-        "story": {
-          "phase": "route-media",
-          "phone": "idle",
-          "rf": false
-        }
-      },
-      {
-        "id": "observe-resilience",
-        "order": 6,
-        "label": "Support operations and resilience",
-        "narrative": "Observability and resilience support service availability, but are not drawn as user traffic and contain no real KPIs.",
-        "focus": ["operations"],
-        "support": ["operations", "DEMO-POWER-01", "DEMO-SHELTER-01"],
-        "paths": ["operations-support"],
-        "activePlane": "support",
-        "camera": "core-diagram",
-        "story": {
-          "phase": "observe-resilience",
-          "phone": "idle",
-          "rf": false
-        }
-      }
-    ],
-    "storyContext": "core"
-  },
-  {
-    "id": "transport-fiber",
-    "title": "Transport & fiber",
-    "question": "What does the Transport team do?",
-    "scope": "synthetic-vendor-neutral",
-    "technology": "Packet and optical transport — conceptual",
-    "disclaimer": "Actual routing, protection, function placement and topology vary by operator; no real route or fault domain is represented.",
-    "sources": [
-      {
-        "label": "ITU-T GSTR-TN5G",
-        "url": "https://www.itu.int/pub/T-TUT-HOME-2018"
-      },
-      {
-        "label": "O-RAN WG4",
-        "url": "https://o-ran.org/technical-groups/wg4"
-      }
-    ],
-    "stages": [
-      {
-        "id": "site-handoff",
-        "order": 1,
-        "label": "Hand off site traffic",
-        "narrative": "Site equipment hands green media and service traffic to the site router or switch.",
-        "focus": ["DEMO-CABINET-01", "site-router"],
-        "support": ["DEMO-POWER-01"],
-        "paths": ["site-to-router"],
-        "activePlane": "media",
-        "camera": "transport-diagram",
-        "story": {
-          "phase": "site-handoff",
-          "phone": "idle",
-          "rf": false
-        }
-      },
-      {
-        "id": "patch-to-fiber",
-        "order": 2,
-        "label": "Patch toward access fiber",
-        "narrative": "The site router or switch hands green media and service traffic through the ODF or patching boundary.",
-        "focus": ["site-router", "odf"],
-        "support": [],
-        "paths": ["router-to-odf"],
-        "activePlane": "media",
-        "camera": "transport-diagram",
-        "story": {
-          "phase": "patch-to-fiber",
-          "phone": "idle",
-          "rf": false
-        }
-      },
-      {
-        "id": "access-fiber",
-        "order": 3,
-        "label": "Cross the access network",
-        "narrative": "From the ODF or patching boundary, access fiber carries green media and service traffic away from the site; this is not a direct site-to-core cable.",
-        "focus": ["odf", "access-fiber"],
-        "support": [],
-        "paths": ["odf-to-access"],
-        "activePlane": "media",
-        "camera": "transport-diagram",
-        "story": {
-          "phase": "access-fiber",
-          "phone": "idle",
-          "rf": false
-        }
-      },
-      {
-        "id": "aggregate-sites",
-        "order": 4,
-        "label": "Aggregate many sites",
-        "narrative": "Aggregation combines green media and service traffic from multiple access connections before broader metro and core transport.",
-        "focus": ["access-fiber", "aggregation"],
-        "support": [],
-        "paths": ["access-to-aggregation"],
-        "activePlane": "media",
-        "camera": "transport-diagram",
-        "story": {
-          "phase": "aggregate-sites",
-          "phone": "idle",
-          "rf": false
-        }
-      },
-      {
-        "id": "metro-core",
-        "order": 5,
-        "label": "Carry across metro and core",
-        "narrative": "Metro and core transport carry green media and service traffic toward a conceptual data centre and core functions.",
-        "focus": ["aggregation", "metro-core", "data-center"],
-        "support": [],
-        "paths": ["aggregation-to-metro", "metro-to-datacenter"],
-        "activePlane": "media",
-        "camera": "transport-diagram",
-        "story": {
-          "phase": "metro-core",
-          "phone": "idle",
-          "rf": false
-        }
-      },
-      {
-        "id": "protect-and-synchronize",
-        "order": 6,
-        "label": "Protect and synchronize",
-        "narrative": "A dashed green conceptual protection route carries alternate media and service traffic, while amber synchronization is a service requirement—not user traffic.",
-        "focus": ["protection-node", "sync-source"],
-        "support": ["sync-source"],
-        "paths": ["protection-route", "sync-service"],
-        "activePlane": "mixed",
-        "camera": "transport-diagram",
-        "story": {
-          "phase": "protect-and-synchronize",
-          "phone": "idle",
-          "rf": false
-        }
-      },
-      {
-        "id": "optional-microwave",
-        "order": 7,
-        "label": "Consider optional microwave",
-        "narrative": "Microwave can carry green media and service traffic as alternative or complementary backhaul. Its use and protection design depend on the deployment.",
-        "focus": ["DEMO-DISH-01", "microwave-network"],
+        "label": "Send the request by radio",
+        "narrative": "Uplink RF travels from the phone to the sector antenna. The radio signal carries the request upward.",
+        "focus": ["receiving-phone", "DEMO-SECTOR-A"],
         "support": ["DEMO-POWER-01", "DEMO-TOWER-01"],
-        "paths": ["microwave-branch"],
-        "activePlane": "media",
-        "camera": "transport-diagram",
+        "paths": ["browse-uplink"],
+        "activePlane": "control",
+        "camera": "sector-a",
         "story": {
-          "phase": "optional-microwave",
-          "phone": "idle",
+          "phase": "browse-uplink",
+          "phone": "loading",
+          "rf": true
+        }
+      },
+      {
+        "id": "convert-to-data",
+        "order": 3,
+        "label": "Turn radio into data",
+        "narrative": "Radio and baseband processing convert the request into data the network can route.",
+        "focus": ["DEMO-SECTOR-A", "radio-unit", "DEMO-CABINET-01"],
+        "support": ["DEMO-POWER-01", "DEMO-TRAY-01", "DEMO-TOWER-01"],
+        "paths": [
+          "browse-uplink",
+          "browse-request-sector-to-radio",
+          "browse-request-radio-to-cabinet"
+        ],
+        "activePlane": "control",
+        "camera": "cabinet",
+        "story": {
+          "phase": "browse-radio",
+          "phone": "loading",
           "rf": false
+        }
+      },
+      {
+        "id": "carry-fiber",
+        "order": 4,
+        "label": "Carry it through fiber",
+        "narrative": "The request passes through the cabinet, site router, fiber patch panel and access fiber toward the transport network.",
+        "focus": ["DEMO-CABINET-01", "site-router", "odf", "access-fiber"],
+        "support": ["DEMO-POWER-01", "DEMO-SHELTER-01"],
+        "paths": [
+          "browse-uplink",
+          "browse-request-sector-to-radio",
+          "browse-request-radio-to-cabinet",
+          "browse-request-cabinet-to-router",
+          "browse-request-router-to-odf",
+          "browse-request-odf-to-access",
+          "browse-request-access-to-transport"
+        ],
+        "activePlane": "control",
+        "camera": "site-wide",
+        "story": {
+          "phase": "browse-fiber",
+          "phone": "loading",
+          "rf": false
+        }
+      },
+      {
+        "id": "route-internet",
+        "order": 5,
+        "label": "Route it to the Internet",
+        "narrative": "Transport and the packet user plane forward the request into a generic Internet or data network.",
+        "focus": ["transport-cloud", "packet-core", "user-plane", "internet-service"],
+        "support": [],
+        "paths": [
+          "browse-uplink",
+          "browse-request-sector-to-radio",
+          "browse-request-radio-to-cabinet",
+          "browse-request-cabinet-to-router",
+          "browse-request-router-to-odf",
+          "browse-request-odf-to-access",
+          "browse-request-access-to-transport",
+          "browse-request-transport-to-user-plane",
+          "browse-request-user-plane-to-internet"
+        ],
+        "activePlane": "control",
+        "camera": "site-wide",
+        "story": {
+          "phase": "browse-route",
+          "phone": "loading",
+          "rf": false
+        }
+      },
+      {
+        "id": "response-return",
+        "order": 6,
+        "label": "Bring the response back",
+        "narrative": "The response reverses every handoff through the user plane, transport, access fiber, patching, site equipment and radio to the serving sector and phone.",
+        "focus": [
+          "internet-service",
+          "user-plane",
+          "transport-cloud",
+          "access-fiber",
+          "odf",
+          "site-router",
+          "DEMO-CABINET-01",
+          "radio-unit",
+          "DEMO-SECTOR-A",
+          "receiving-phone"
+        ],
+        "support": ["DEMO-POWER-01", "DEMO-SHELTER-01", "DEMO-TOWER-01"],
+        "paths": [
+          "browse-response-internet-to-user-plane",
+          "browse-response-user-plane-to-transport",
+          "browse-response-transport-to-access",
+          "browse-response-access-to-odf",
+          "browse-response-odf-to-router",
+          "browse-response-router-to-cabinet",
+          "browse-response-cabinet-to-radio",
+          "browse-response-radio-to-sector",
+          "browse-response-sector-to-phone"
+        ],
+        "activePlane": "media",
+        "camera": "site-wide",
+        "story": {
+          "phase": "browse-response",
+          "phone": "loading",
+          "rf": true
+        }
+      },
+      {
+        "id": "page-loaded",
+        "order": 7,
+        "label": "Show the page",
+        "narrative": "The synchronized phone inset displays a neutral Page loaded state.",
+        "focus": ["DEMO-SECTOR-A", "receiving-phone"],
+        "support": ["DEMO-POWER-01", "DEMO-TOWER-01"],
+        "paths": ["browse-response-radio-to-sector", "browse-response-sector-to-phone"],
+        "activePlane": "media",
+        "camera": "sector-a",
+        "story": {
+          "phase": "browse-loaded",
+          "phone": "loaded",
+          "rf": true
         }
       }
     ],
-    "storyContext": "transport"
+    "storyContext": "site"
   }
 ]
