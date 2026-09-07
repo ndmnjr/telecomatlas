@@ -1,3 +1,5 @@
+import { createPhoneInset } from './story/phone.js';
+import { stageCopy, scenarioTitles } from './story/copy.js';
 import { catalogue } from './catalogue.js';
 import { filterParts } from './interaction.js';
 import { createScene } from './scene.js';
@@ -21,6 +23,8 @@ let journeyController;
 let journeyPanel;
 let journeyOverlay;
 let journeyTimer;
+let phoneInset;
+let technical = false;
 
 function renderLegend() {
   const matches = filterParts(catalogue, $('#search').value);
@@ -103,21 +107,32 @@ function renderJourney() {
   const scenario = journeyController.getScenario();
   const stage = journeyController.getStage();
   const journeyState = journeyController.getState();
+  const story = journeyController.getStoryState(
+    matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
+  view.journey(stage, story);
+  phoneInset.render(story);
+  renderJourneyVisual();
+  journeyPanel.render(scenario, stage, journeyState, inspectedPart());
+  $('#view-name').textContent = stageCopy(stage, technical).title.toUpperCase();
+  $('#view-subtitle').textContent =
+    `${scenarioTitles[scenario.id]} · ${stage.order} of ${scenario.stages.length}`;
+}
+
+function renderJourneyVisual() {
+  if (!state.journey || !journeyController) return;
   const inventoryIds = Object.entries(JOURNEY_TARGETS)
     .filter(([, target]) => target.kind === 'inventory')
     .map(([id]) => id);
-  view.journey(stage);
   journeyOverlay.render(
-    scenario,
-    stage,
+    journeyController.getScenario(),
+    journeyController.getStage(),
     view.projectAnchors(inventoryIds),
-    journeyState,
+    journeyController.getState(),
     matchMedia('(prefers-reduced-motion: reduce)').matches,
+    view.storyVisual(),
+    technical,
   );
-  journeyPanel.render(scenario, stage, journeyState, inspectedPart());
-  $('#view-name').textContent = stage.label.toUpperCase();
-  $('#view-subtitle').textContent =
-    `${scenario.title} · ${stage.order} of ${scenario.stages.length}`;
 }
 
 function select(number) {
@@ -245,6 +260,7 @@ try {
     const part = view.parts.find((item) => item.assetId === assetId);
     if (part) select(part.number);
   });
+  phoneInset = createPhoneInset($('#stage'), () => journeyController.seekStage(7));
   journeyPanel = createJourneyPanel($('#journey-panel'), scenarios, {
     selectScenario: journeyController.selectScenario,
     previous: journeyController.previous,
@@ -252,8 +268,15 @@ try {
     toggle: journeyController.toggle,
     seekStage: journeyController.seekStage,
     resume: journeyController.resumeAfterInspection,
+    terms(value) {
+      technical = value;
+      renderJourney();
+    },
   });
+  view.onProjection(renderJourneyVisual);
   journeyController.subscribe(renderJourney);
+  const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+  motionPreference.addEventListener('change', renderJourney);
   journeyTimer = setInterval(() => journeyController.advance(100), 100);
   ui();
   $('#loading').hidden = true;
@@ -266,12 +289,16 @@ try {
       ...journeyController.getState(),
       scenarioId: journeyController.getScenario().id,
       stageId: journeyController.getStage().id,
+      story: journeyController.getStoryState(
+        matchMedia('(prefers-reduced-motion: reduce)').matches,
+      ),
     }),
   });
   window.addEventListener(
     'pagehide',
     () => {
       clearInterval(journeyTimer);
+      motionPreference.removeEventListener('change', renderJourney);
       view.dispose();
     },
     { once: true },

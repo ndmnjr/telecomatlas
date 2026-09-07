@@ -1,3 +1,7 @@
+import { createStoryScenes } from './story/scenes.js';
+import { siteRoutes } from './story/ground-path.js';
+import { rfWavefronts } from './story/rf.js';
+import { createStoryActors } from './story/actors.js';
 import * as T from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -92,6 +96,14 @@ export async function createScene(host, state, onSelect) {
     p.mesh.material = material;
     p.color = material.color.clone();
   }
+  const actors = createStoryActors(parts);
+  const contexts = createStoryScenes();
+  actors.group.add(contexts.group);
+  contexts.update(null);
+  actors.group.visible = false;
+  scene.add(actors.group);
+  let story = null;
+  let projectionListener = () => {};
   let amount = state.amount,
     journeyStage = null,
     height = 20,
@@ -157,6 +169,16 @@ export async function createScene(host, state, onSelect) {
         size.y / 0.76,
         size.x / aspect / (1 - (host.clientWidth < 500 ? 62 : 96) / host.clientWidth),
       ) * 1.08;
+    if (story?.context === 'site' && !state.selected) {
+      const close = story.phase === 'ring';
+      c.set(close ? 2.7 : -0.3, close ? 2.6 : 2.2, 1.6);
+      targetHeight = Math.max(close ? 8.5 : 10.5, (close ? 6.4 : 12) / aspect);
+    }
+    if (story && story.context !== 'site' && !state.selected) {
+      c.set(0, 1.4, 0.7);
+      targetHeight = Math.max(9.5, 16 / aspect);
+      direction.set(0.12, 0.6, 1.4).normalize();
+    }
     targetLook.copy(c);
     targetPosition.copy(c).addScaledVector(direction, 80);
     camera.zoom = 1;
@@ -238,7 +260,8 @@ export async function createScene(host, state, onSelect) {
       const selected = p.number === state.selected,
         focused = journeyFocus.has(p.assetId) || journeyFocus.has(p.sourceName),
         supporting = journeySupport.has(p.assetId) || journeySupport.has(p.sourceName);
-      p.mesh.visible = !state.isolate || selected;
+      p.mesh.visible =
+        (!story || story.context === 'site' || selected) && (!state.isolate || selected);
       p.mesh.material.color.copy(
         selected
           ? new T.Color('#117a68')
@@ -250,7 +273,7 @@ export async function createScene(host, state, onSelect) {
       );
       const dim = state.selected ? !selected : !!journeyStage && !focused && !supporting;
       p.mesh.material.transparent = dim;
-      p.mesh.material.opacity = dim ? (state.selected ? 0.14 : 0.38) : 1;
+      p.mesh.material.opacity = dim ? (state.selected ? 0.14 : 0.72) : 1;
       p.mesh.material.depthWrite = !dim;
       p.mesh.material.needsUpdate = true;
       p.mesh.castShadow = !state.selected && !journeyStage && p.number !== 1;
@@ -323,6 +346,7 @@ export async function createScene(host, state, onSelect) {
       renderer.render(scene, camera);
       labels();
       dirty = false;
+      if (story) projectionListener();
     }
   }
   frame = requestAnimationFrame(animate);
@@ -360,8 +384,60 @@ export async function createScene(host, state, onSelect) {
       }),
     );
   });
+  function projectWorld(point) {
+    const p = point.clone().project(camera);
+    return { x: (p.x + 1) * 50, y: (1 - p.y) * 50 };
+  }
+  function storyVisual() {
+    if (!story) return {};
+    const model =
+      story.context === 'site'
+        ? siteRoutes(parts, actors.phone.getWorldPosition(new T.Vector3()))
+        : contexts.model(story.context);
+    const anchors = Object.fromEntries(
+      Object.entries(model.anchors).map(([id, p]) => [id, projectWorld(p)]),
+    );
+    const pixel = (p) => ({
+      x: (p.x * host.clientWidth) / 100,
+      y: (p.y * host.clientHeight) / 100,
+    });
+    const projectedSector = anchors['DEMO-SECTOR-A'] ? pixel(anchors['DEMO-SECTOR-A']) : null;
+    const projectedPhone = anchors['receiving-phone'] ? pixel(anchors['receiving-phone']) : null;
+    const rf = story.rf
+      ? rfWavefronts(
+          projectedSector,
+          projectedPhone,
+          story.progress,
+          story.reduced,
+          story.phone === 'connected',
+        )
+      : null;
+    return {
+      context: story.context,
+      towers: model.towers?.map((p) => p.toArray()) ?? [],
+      rackCount: model.rackCount ?? 0,
+      layers: model.layers ?? [],
+      annotations: (model.labels ?? []).map((id, index) => ({
+        id,
+        number: index + 1,
+        ...anchors[id],
+      })),
+      anchors,
+      projectedSector,
+      projectedPhone,
+      rf,
+      routes: Object.entries(model.paths).map(([id, path]) => ({
+        id,
+        ...path,
+        worldPoints: path.points.map((p) => p.toArray()),
+        points: path.points.map(projectWorld),
+        active: journeyStage.paths.includes(id),
+      })),
+    };
+  }
   function audit() {
     return {
+      story: story ? { actors: actors.audit(), groundY: actors.groundY, ...storyVisual() } : null,
       amount,
       selected: state.selected,
       isolate: state.isolate,
@@ -404,12 +480,26 @@ export async function createScene(host, state, onSelect) {
       dirty = true;
     },
     audit,
-    journey(stage) {
+    onProjection(listener) {
+      projectionListener = listener;
+    },
+    storyVisual,
+    journey(stage, nextStory) {
+      const changed = story?.context !== nextStory.context || story?.phase !== nextStory.phase;
+      story = nextStory;
+      actors.update(story);
+      actors.group.visible = !state.selected;
+      actors.person.visible = story.context === 'site';
+      contexts.update(story.context);
       journeyStage = stage;
+      if (changed) fit();
       updateSelection();
     },
     clearJourney() {
       journeyStage = null;
+      story = null;
+      actors.group.visible = false;
+      fit();
       updateSelection();
     },
     projectAnchors(ids) {
@@ -459,6 +549,8 @@ export async function createScene(host, state, onSelect) {
         p.mesh.geometry.dispose();
         p.mesh.material.dispose();
       }
+      contexts.dispose();
+      actors.dispose();
       renderer.dispose();
     },
   };

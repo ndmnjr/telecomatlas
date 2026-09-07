@@ -60,6 +60,8 @@ export function validateScenarios(input, registries) {
   const scenarioIds = new Set();
   for (const scenario of input) {
     text(scenario.id, 'scenario id');
+    if (!['site', 'core', 'transport'].includes(scenario.storyContext))
+      fail('invalid story context');
     text(scenario.title, `${scenario.id} title`);
     text(scenario.scope, `${scenario.id} scope`);
     text(scenario.disclaimer, `${scenario.id} disclaimer`);
@@ -77,6 +79,13 @@ export function validateScenarios(input, registries) {
     const stageIds = new Set();
     scenario.stages.forEach((stage, index) => {
       text(stage.id, `${scenario.id} stage id`);
+      if (
+        !stage.story ||
+        !['idle', 'ringing', 'connected'].includes(stage.story.phone) ||
+        typeof stage.story.rf !== 'boolean'
+      )
+        fail(`${stage.id} invalid story state`);
+      text(stage.story.phase, `${stage.id} story phase`);
       text(stage.label, `${scenario.id}/${stage.id} label`);
       text(stage.narrative, `${scenario.id}/${stage.id} narrative`);
       if (stageIds.has(stage.id)) fail(`duplicate stage id ${stage.id}`);

@@ -78,7 +78,7 @@ export function resolveTargetPositions(targetIds, projected = {}) {
   return Object.fromEntries(
     targetIds.map((id) => {
       const fallback = JOURNEY_TARGETS[id];
-      const actual = fallback.kind === 'inventory' && projected[id] ? projected[id] : fallback;
+      const actual = projected[id] ?? fallback;
       return [id, { x: actual.x, y: actual.y, label: fallback.label, kind: fallback.kind }];
     }),
   );

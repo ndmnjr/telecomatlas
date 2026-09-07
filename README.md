@@ -75,16 +75,37 @@ manifest there.
 - `/` focuses search. Tab/Enter/Space activate controls. Arrow/Home/End keys work
   on the separation slider. Escape clears inspection or the focused search.
 - Explore returns to the full site; Inspect opens the selected part or tower mast.
-- Journeys opens **Incoming IMS call**, **Core team**, and **Transport & fiber**.
+- Journeys opens **Incoming call**, **Inside the network**, and **Transport & fiber**.
   Use Play/Pause, Previous/Next, the stage timeline, or the persistent step list.
   With focus on the journey panel, Left/Right step, Space plays or pauses, and
   Home/End seek to the first/last stage. Selecting a highlighted site asset pauses
   playback for the normal component inspection; **Resume journey** keeps the stage.
 
+Journeys starts in **Simple** mode. **Technical terms** changes the stage titles,
+explanations and scene cards without changing the route, progress or playback.
+The incoming story starts with a grounded person carrying a phone. Setup follows
+the ground boundary, access fiber, patch panel, router and cabinet, then the real
+cable tray and tower cable. Four curved wavefronts connect the actual serving
+antenna face to the handheld phone. At ringing, the camera moves closer and the
+readable phone inset offers **Answer call**. You can also use Next or the timeline.
+
+Connected voice follows every handoff in both directions. Filled pulses travel
+toward the phone; open pulses return. Solid and dashed radio fronts distinguish
+the two directions. Power, shelter and tower structure remain amber support.
+Transport has a separate ground cross-section with buried ducts, a second dashed
+protection route, timing support and an optional link between two visible towers.
+Core opens a separate conceptual data-centre cutaway with eight shared racks and
+network fabric. Numbered cards map the logical roles to the scene; they do not
+assign one function to one physical server.
+
 Cyan paths are conceptual control/call-setup signalling, green paths are established
 voice media, and amber paths or highlights are synchronization and availability
 support—not user traffic. Reduced-motion preferences replace moving path progress
 with stepped static state.
+The same preference also stops walk cycles and handset vibration, and replaces
+moving wavefronts with static ones. Changing the preference while paused updates
+the scene immediately. Every stage has an equivalent text explanation and remains
+available through Previous/Next, seek and keyboard controls.
 
 The viewer preserves the 32 original source meshes and 11 equipment identities;
 ground and pad remain selectable context. Some meshes combine multiple physical
@@ -99,6 +120,16 @@ provides rendering, picking and the narrow journey anchor/highlight adapter;
 `src/main.js` connects native DOM controls. `src/scenarios/` contains the public
 JSON contract, validator, deterministic controller, path/target registry and
 accessible SVG/HTML overlay and panel.
+
+`src/story/actors.js` builds the procedural person and handset;
+`phone.js` synchronizes the inset; `rf.js` computes the four curved fronts;
+`ground-path.js` resolves physical handoffs from the source mesh bounds;
+`scenes.js` builds the grounded transport and separate core contexts; and `copy.js`
+provides Simple/Technical copy. These shapes live under `storyActors`, outside the
+selectable source inventory, and never receive asset IDs. Scenario JSON declares
+each stage's actor, phone and radio state. The controller derives deterministic
+motion from timeline progress. Projection refreshes during camera movement,
+including while playback is paused.
 
 Journey caller, phone, service/core, data-centre and transport nodes are teaching
 overlays only: they are not physical topology, do not imply one logical function
@@ -115,3 +146,37 @@ System fonts are supplied by the operating system.
 
 `dist/`, `node_modules/`, verification output and caches are intentionally ignored.
 No project-wide license grant is implied by the dependency notices.
+
+## Realism verification
+
+`npm run verify` runs the original Explore/Inspect suite, all journey stages, and
+the realism CDP suite. `npm run verify:realism` runs the realism suite alone;
+`npm run verify:errors` runs the standalone asset-error suite. All use the existing
+local Chrome harness, with no new dependency, downloaded asset or browser install.
+
+Realism unit tests cover grounding, human scale, phone attachment, exact antenna
+anchors, physical route handoffs, four wavefronts, bidirectional media, cross-section
+and cutaway structure, declarative state, stage order and reduced motion. CDP checks
+cover desktop and 390×844, the explanation toggle, Answer, live motion preference
+changes, playback and pause, and restoration of the original 32 meshes/11 assets.
+They also hash stage-only screenshot samples to prove ground-path and RF pixels change
+in normal motion and remain identical under reduced motion.
+
+The implementation's vertical slices were tested red before implementation and
+green afterward. Exact process output, command arguments and exit codes are saved
+in `verification/realism-red.log` and `verification/realism-green.log`. The recorder
+appends raw stdout/stderr without truncating it. For example:
+
+```sh
+node scripts/record-realism.mjs green node --test tests/realism.test.mjs
+node scripts/record-realism.mjs green node scripts/realism-browser-test.mjs
+```
+
+Screenshots use `verification/realism-desktop-*.png` and
+`verification/realism-mobile-*.png`: approach, ground fiber, tower cable, ringing,
+conversation, paired RF animation frames, transport, microwave, core and reduced
+motion. Logs and screenshots remain local verification artifacts.
+
+Illustrative, vendor-neutral teaching model. It does not represent an operator's
+actual topology, sites, routes, vendors, capacity, configuration, coverage,
+synchronization or resilience design.

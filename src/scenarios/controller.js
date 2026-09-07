@@ -15,6 +15,16 @@ export function createJourneyController(scenarios, options = {}) {
     getState: () => ({ ...state }),
     getScenario: () => scenarios[state.scenarioIndex],
     getStage: () => scenarios[state.scenarioIndex].stages[state.stageIndex],
+    getStoryState(reduced = false) {
+      const context = api.getScenario().storyContext;
+      return {
+        context,
+        ...api.getStage().story,
+        progress: reduced ? 0 : state.progress,
+        reduced,
+        playing: state.playing,
+      };
+    },
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);

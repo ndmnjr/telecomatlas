@@ -1,3 +1,4 @@
+import { stageCopy, scenarioTitles, PUBLIC_DISCLAIMER } from '../story/copy.js';
 export function panelViewModel(scenario, stage, state) {
   const last = scenario.stages.length - 1;
   return {
@@ -37,6 +38,19 @@ const element = (tag, className, text) => {
 };
 
 export function createJourneyPanel(host, scenarios, handlers) {
+  let technical = false;
+  let lastRender;
+  const toggle = element('button', 'story-technical', 'Technical terms: off');
+  toggle.type = 'button';
+  toggle.setAttribute('aria-pressed', 'false');
+  toggle.addEventListener('click', () => {
+    technical = !technical;
+    toggle.setAttribute('aria-pressed', String(technical));
+    toggle.textContent = technical ? 'Technical terms: on' : 'Technical terms: off';
+    renderedScenario = null;
+    api.render(...lastRender);
+    handlers.terms?.(technical);
+  });
   const kicker = element('div', 'eyebrow', 'LEARN / NETWORK JOURNEYS');
   const tabs = element('div', 'journey-tabs');
   tabs.setAttribute('role', 'tablist');
@@ -84,6 +98,7 @@ export function createJourneyPanel(host, scenarios, handlers) {
     tabs,
     question,
     technology,
+    toggle,
     progress,
     stageTitle,
     narrative,
@@ -99,7 +114,7 @@ export function createJourneyPanel(host, scenarios, handlers) {
   );
 
   for (const scenario of scenarios) {
-    const button = element('button', 'journey-tab', scenario.title);
+    const button = element('button', 'journey-tab', scenarioTitles[scenario.id]);
     button.type = 'button';
     button.dataset.scenario = scenario.id;
     button.setAttribute('role', 'tab');
@@ -113,8 +128,10 @@ export function createJourneyPanel(host, scenarios, handlers) {
   resume.addEventListener('click', handlers.resume);
 
   let renderedScenario = null;
-  return {
+  const api = {
     render(scenario, stage, state, inspectedPart = null) {
+      lastRender = [scenario, stage, state, inspectedPart];
+      const copy = stageCopy(stage, technical);
       const model = panelViewModel(scenario, stage, state);
       for (const tab of tabs.children) {
         const selected = tab.dataset.scenario === scenario.id;
@@ -122,10 +139,12 @@ export function createJourneyPanel(host, scenarios, handlers) {
         tab.setAttribute('tabindex', selected ? '0' : '-1');
       }
       question.textContent = scenario.question;
-      technology.textContent = scenario.technology;
+      technology.textContent = technical
+        ? scenario.technology
+        : 'Simple explanation / illustrative network';
       progress.textContent = model.stepText;
-      stageTitle.textContent = stage.label;
-      narrative.textContent = stage.narrative;
+      stageTitle.textContent = copy.title;
+      narrative.textContent = copy.text;
       condition.hidden = !stage.condition;
       condition.textContent = stage.condition ?? '';
       previous.disabled = model.previousDisabled;
@@ -136,7 +155,7 @@ export function createJourneyPanel(host, scenarios, handlers) {
       timeline.value = String(model.timelineValue);
       timeline.setAttribute('aria-valuetext', model.stepText);
       host.dataset.plane = stage.activePlane;
-      disclaimer.textContent = scenario.disclaimer;
+      disclaimer.textContent = PUBLIC_DISCLAIMER;
       if (renderedScenario !== scenario.id) {
         list.replaceChildren();
         for (const item of scenario.stages) {
@@ -149,7 +168,7 @@ export function createJourneyPanel(host, scenarios, handlers) {
             'journey-step-number',
             String(item.order).padStart(2, '0'),
           );
-          const label = element('span', '', item.label);
+          const label = element('span', '', stageCopy(item, technical).title);
           button.append(number, label);
           button.addEventListener('click', () => handlers.seekStage(item.order - 1));
           row.append(button);
@@ -178,4 +197,5 @@ export function createJourneyPanel(host, scenarios, handlers) {
       return model;
     },
   };
+  return api;
 }
